@@ -181,4 +181,4 @@ sudo nginx -t
 sudo systemctl reload nginx
 
 echo "✅ Nginx is configured. Access KiwiSDR at https://kiwisdr.local"
-echo "ℹ️ To view renewal logs: journalctl -u proxy-cert-renew.service"
+echo "ℹ️ To view TLS renewal logs: journalctl -u proxy-cert-renew.service"
