@@ -8,6 +8,7 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Install nginx if not installed
 if command_exists nginx; then
     echo "✅ Nginx is already installed: $(nginx -v)"
 else
@@ -36,6 +37,7 @@ sudo openssl req -x509 -nodes -days 365 \
   -newkey rsa:2048 \
   -keyout "$SSL_DIR/kiwisdr.key" \
   -out "$SSL_DIR/kiwisdr.crt"
+echo "✅ Self-signed SSL certificate created at $SSL_DIR"
 
 # Configure Nginx reverse proxy for kiwisdr.local
 echo "Configuring Nginx Proxy for kiwisdr.local"
