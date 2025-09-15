@@ -53,8 +53,9 @@ server {
     listen 443 ssl;
     server_name kiwisdr.local;
 
-    ssl_certificate     /etc/ssl/kiwisdr/kiwisdr.crt; #$SSL_DIR dosn't work here
+    ssl_certificate     /etc/ssl/kiwisdr/kiwisdr.crt;
     ssl_certificate_key /etc/ssl/kiwisdr/kiwisdr.key;
+
 
     #ssl_protocols       TLSv1.2 TLSv1.3;
     ssl_protocols       TLSv1.2;
