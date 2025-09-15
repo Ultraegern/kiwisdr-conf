@@ -28,16 +28,97 @@ else
     echo "✅ OpenSSL installed successfully: $(openssl version)"
 fi
 
-# Create a self-signed SSL certificate
-echo "Creating self-signed SSL certificate"
+# Generate self-signed TLS certificate
+echo "Generating self-signed TLS certificate"
 SSL_DIR="/etc/ssl/kiwisdr"
 sudo mkdir -p "$SSL_DIR"
-sudo openssl req -x509 -nodes -days 365 \
+sudo openssl req -x509 -nodes -days 90 \
   -subj "/C=US/ST=State/L=City/O=Organization/OU=Org/CN=kiwisdr.local" \
   -newkey rsa:2048 \
   -keyout "$SSL_DIR/kiwisdr.key" \
   -out "$SSL_DIR/kiwisdr.crt"
-echo "✅ Self-signed SSL certificate created at $SSL_DIR"
+echo "✅ Self-signed TLS certificate created at $SSL_DIR"
+
+
+echo "Setting up monthly certificate renewal with systemd..."
+# Renewal script
+sudo tee /usr/local/bin/renew-proxy-cert.sh > /dev/null <<'EOF'
+#!/bin/bash
+set -euo pipefail
+SSL_DIR="/etc/ssl/kiwisdr"
+TS=$(date +%F-%H%M%S)
+
+# Backup old cert/key if they exist
+if [[ -f "$SSL_DIR/kiwisdr.crt" ]]; then
+  mv "$SSL_DIR/kiwisdr.crt" "$SSL_DIR/kiwisdr.crt.$TS"
+fi
+if [[ -f "$SSL_DIR/kiwisdr.key" ]]; then
+  mv "$SSL_DIR/kiwisdr.key" "$SSL_DIR/kiwisdr.key.$TS"
+fi
+
+# Generate new cert
+openssl req -x509 -nodes -days 90 \
+  -subj "/C=US/ST=State/L=City/O=Organization/OU=Org/CN=kiwisdr.local" \
+  -newkey rsa:2048 \
+  -keyout "$SSL_DIR/kiwisdr.key" \
+  -out "$SSL_DIR/kiwisdr.crt"
+
+
+# Cleanup old backups (keep only 3 newest of each)
+# Enable nullglob so nonexistent files expand to nothing
+shopt -s nullglob
+
+crt_files=( "$SSL_DIR"/kiwisdr.crt.* )
+if (( ${#crt_files[@]} > 3 )); then
+    ls -1t "${crt_files[@]}" | tail -n +4 | xargs -r rm -f
+fi
+
+key_files=( "$SSL_DIR"/kiwisdr.key.* )
+if (( ${#key_files[@]} > 3 )); then
+    ls -1t "${key_files[@]}" | tail -n +4 | xargs -r rm -f
+fi
+
+# Reset nullglob to default (optional)
+shopt -u nullglob
+
+
+# Reload nginx to apply new cert
+systemctl reload nginx
+EOF
+sudo chmod +x /usr/local/bin/renew-proxy-cert.sh
+
+# Systemd service with logging
+sudo tee /etc/systemd/system/proxy-cert-renew.service > /dev/null <<EOF
+[Unit]
+Description=Renew proxy self-signed SSL certificate
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/renew-proxy-cert.sh
+StandardOutput=journal
+StandardError=journal
+EOF
+
+# Systemd timer
+sudo tee /etc/systemd/system/proxy-cert-renew.timer > /dev/null <<EOF
+[Unit]
+Description=Run proxy cert renewal monthly
+
+# Midnight on the first day of every month
+[Timer]
+OnCalendar=*-*-01 00:00:00 
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+# Enable and start the timer
+sudo systemctl daemon-reload
+sudo systemctl enable --now proxy-cert-renew.timer
+
+echo "✅ Monthly certificate renewal via systemd is set up."
+
 
 # Configure Nginx reverse proxy for kiwisdr.local
 echo "Configuring Nginx Proxy for kiwisdr.local"
@@ -57,17 +138,37 @@ server {
     ssl_certificate_key /etc/ssl/kiwisdr/kiwisdr.key;
 
 
-    #ssl_protocols       TLSv1.2 TLSv1.3;
+    #ssl_protocols       TLSv1.2 TLSv1.3; # Uncomment if TLSv1.3 is supported
     ssl_protocols       TLSv1.2;
     ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    server_tokens off;
+    client_max_body_size 1M;  # KiwiSDR doesn’t need large uploads
+    client_body_buffer_size 128k;
+
 
     location / {
         proxy_pass http://127.0.0.1:8073;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+
+        # Security headers
+        add_header X-Frame-Options DENY;
+        add_header X-Content-Type-Options nosniff;
+        add_header Referrer-Policy no-referrer;
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self';" always;
+        add_header X-Permitted-Cross-Domain-Policies none;
+
+        # Gzip for UI assets
+        gzip on;
+        gzip_types text/plain text/css application/javascript application/json;
+        gzip_proxied any;
+        gzip_min_length 256;
     }
 }
 EOF
@@ -80,7 +181,4 @@ sudo nginx -t
 sudo systemctl reload nginx
 
 echo "✅ Nginx is configured. Access KiwiSDR at https://kiwisdr.local"
-
-
-
-
+echo "ℹ️ To view renewal logs: journalctl -u proxy-cert-renew.service"
