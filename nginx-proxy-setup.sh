@@ -3,15 +3,29 @@
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-# Install nginx
-echo "Updating package lists"
-sudo apt update -qq
-echo "Installing Nginx and OpenSSL"
-sudo apt install nginx openssl -y -qq
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
 
-# Verify installation
-nginx -v
-echo "✅ Nginx and OpenSSl installed successfully"
+if command_exists nginx; then
+    echo "✅ Nginx is already installed: $(nginx -v)"
+else
+    echo "Installing Nginx..."
+    sudo apt update -qq
+    sudo apt install -y -qq nginx
+    echo "✅ Nginx installed successfully: $(nginx -v)"
+fi
+
+# Install openssl if not installed
+if command_exists openssl; then
+    echo "✅ OpenSSL is already installed: $(openssl version)"
+else
+    echo "Installing OpenSSL..."
+    sudo apt update -qq
+    sudo apt install -y -qq openssl
+    echo "✅ OpenSSL installed successfully: $(openssl version)"
+fi
 
 # Create a self-signed SSL certificate
 echo "Creating self-signed SSL certificate"
