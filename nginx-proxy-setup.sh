@@ -42,7 +42,7 @@ echo "✅ Self-signed SSL certificate created at $SSL_DIR"
 # Configure Nginx reverse proxy for kiwisdr.local
 echo "Configuring Nginx Proxy for kiwisdr.local"
 NGINX_CONF="/etc/nginx/sites-available/kiwisdr"
-sudo tee "$NGINX_CONF" > /dev/null <<'EOF'
+sudo tee "$NGINX_CONF" > /dev/null <<EOF
 server {
     listen 80;
     server_name kiwisdr.local;
