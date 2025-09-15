@@ -1,10 +1,11 @@
 #!/bin/bash
 
 set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
 
 # Install prerequisites
 sudo apt update
-sudo apt install curl gnupg2 ca-certificates lsb-release debian-archive-keyring
+sudo apt install -y curl gnupg2 ca-certificates lsb-release debian-archive-keyring
 
 # Configure repository keys
 curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor | sudo tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
@@ -28,5 +29,14 @@ echo -e "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 
 # Install nginx
 sudo apt update
 sudo apt install nginx -y
+sudo systemctl enable nginx
+sudo systemctl start nginx
+sleep 2
+sudo systemctl status nginx --no-pager
+
+# Verify installation
+nginx -v
+
+
 
 
