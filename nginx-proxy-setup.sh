@@ -27,8 +27,11 @@ export DEBIAN_FRONTEND=noninteractive
 #echo -e "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" | sudo tee /etc/apt/preferences.d/99nginx >/dev/null
 
 # Install nginx
+echo "Updating package lists"
 sudo apt update -qq
+echo "Installing Nginx"
 sudo apt install nginx -y -qq
+echo "Testing Nginx installation"
 sudo systemctl enable nginx --quiet
 sudo systemctl start nginx --quiet
 sleep 2
@@ -36,6 +39,36 @@ sudo systemctl status nginx --no-pager
 
 # Verify installation
 nginx -v
+echo "✅ Nginx installed successfully"
+
+
+# Configure Nginx reverse proxy for kiwisdr.local
+echo "Configuring Nginx for KiwiSDR"
+NGINX_CONF="/etc/nginx/sites-available/kiwisdr"
+sudo tee "$NGINX_CONF" > /dev/null <<'EOF'
+server {
+    listen 80;
+    server_name kiwisdr.local;
+
+    location / {
+        proxy_pass http://127.0.0.1:8073;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+EOF
+
+# Enable the site
+sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/kiwisdr
+
+# Test configuration and reload Nginx
+sudo nginx -t
+sudo systemctl reload nginx
+
+echo "✅ Nginx is configured. Access KiwiSDR at http://kiwisdr.local"
 
 
 
