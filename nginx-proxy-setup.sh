@@ -54,7 +54,8 @@ server {
     ssl_certificate     $SSL_DIR/kiwisdr.crt;
     ssl_certificate_key $SSL_DIR/kiwisdr.key;
 
-    ssl_protocols       TLSv1.2 TLSv1.3;
+    #ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_protocols       TLSv1.2;
     ssl_ciphers         HIGH:!aNULL:!MD5;
 
     location / {
