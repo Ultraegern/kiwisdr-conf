@@ -120,6 +120,7 @@ sudo systemctl enable proxy-cert-renew.timer
 sudo systemctl start proxy-cert-renew.timer
 
 echo "✅ Monthly certificate renewal via systemd is set up."
+echo "ℹ️ To view certificate renewal logs: journalctl -u proxy-cert-renew.service"
 
 
 # Configure Nginx reverse proxy for kiwisdr.local
@@ -129,7 +130,7 @@ sudo tee "$NGINX_CONF" > /dev/null <<'EOF'
 server {
     listen 80;
     server_name kiwisdr.local;
-    return 301 https://\$host\$request_uri;
+    return 301 https://\$host$request_uri;
 }
 
 server {
@@ -183,4 +184,3 @@ sudo nginx -t
 sudo systemctl reload nginx
 
 echo "✅ Nginx is configured. Access KiwiSDR at https://kiwisdr.local"
-echo "ℹ️ To view TLS renewal logs: journalctl -u proxy-cert-renew.service"
