@@ -156,16 +156,18 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
 
-        # Security headers
-        add_header X-Frame-Options DENY;
-        add_header X-Content-Type-Options nosniff;
-        add_header Referrer-Policy no-referrer;
-        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-        add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self';" always;
-        add_header X-Permitted-Cross-Domain-Policies none;
+        ## Security headers - Breaks KiwiSDR WebUI
+        #add_header X-Frame-Options DENY;
+        #add_header X-Content-Type-Options nosniff;
+        #add_header Referrer-Policy no-referrer;
+        #add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        #add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self';" always;
+        #add_header X-Permitted-Cross-Domain-Policies none;
 
         # Gzip for UI assets
         gzip on;
