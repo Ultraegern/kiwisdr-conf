@@ -1,8 +1,8 @@
-Start by adding public.key to gpg:
+Start by adding public.key to GPG:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Ultraegern/kiwisdr-conf/refs/heads/main/public.key | gpg --import
 ```
-Mark it as trusted:
+And mark it as trusted:
 ```bash
 echo "3CB2F77A8047BEDC:4:" | gpg --import-ownertrust >/dev/null
 ```
