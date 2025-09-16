@@ -36,7 +36,8 @@ sudo openssl req -x509 -nodes -days 90 \
   -subj "/C=US/ST=State/L=City/O=Organization/OU=Org/CN=kiwisdr.local" \
   -newkey rsa:2048 \
   -keyout "$SSL_DIR/kiwisdr.key" \
-  -out "$SSL_DIR/kiwisdr.crt"
+  -out "$SSL_DIR/kiwisdr.crt" \
+  >/dev/null
 echo "✅ Self-signed TLS certificate created at $SSL_DIR"
 
 
@@ -115,7 +116,8 @@ EOF
 
 # Enable and start the timer
 sudo systemctl daemon-reload
-sudo systemctl enable --now proxy-cert-renew.timer
+sudo systemctl enable proxy-cert-renew.timer
+sudo systemctl start proxy-cert-renew.timer
 
 echo "✅ Monthly certificate renewal via systemd is set up."
 
