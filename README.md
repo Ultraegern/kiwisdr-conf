@@ -2,6 +2,10 @@ Start by adding public.key to gpg:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Ultraegern/kiwisdr-conf/refs/heads/main/public.key | gpg --import
 ```
+Make it trusted:
+```bash
+echo "3CB2F77A8047BEDC:4:" | gpg --import-ownertrust >/dev/null
+```
 To install nginx proxy:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Ultraegern/kiwisdr-conf/refs/heads/main/nginx-proxy-setup.sh.asc -o nginx-proxy-setup.sh.asc && \
