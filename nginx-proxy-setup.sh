@@ -122,6 +122,55 @@ sudo systemctl start proxy-cert-renew.timer
 echo "✅ Monthly certificate renewal via systemd is set up."
 echo "ℹ️ To view certificate renewal logs: journalctl -u proxy-cert-renew.service"
 
+# Custom 502 error page
+sudo tee /var/www/html/custom_502.html > /dev/null <<'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>502 Bad Gateway</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 5%;
+      background-color: #1e1e1e;
+      color: #f1f1f1;
+    }
+    h1 {
+      font-size: 3em;
+      color: #ff5555;
+    }
+    p {
+      font-size: 1.2em;
+      margin: 1em 0;
+    }
+    button {
+      padding: 0.6em 1.2em;
+      font-size: 1em;
+      background-color: #444;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #666;
+    }
+  </style>
+  <script>
+    // Auto-refresh every 10 seconds
+    setTimeout(() => { window.location.reload(); }, 10000);
+  </script>
+</head>
+<body>
+  <h1>502 Bad Gateway</h1>
+  <p>The KiwiSDR backend isn’t responding right now.</p>
+  <p>Retrying automatically in 10 seconds...</p>
+  <button onclick="window.location.reload();">Try Again Now</button>
+</body>
+</html>
+EOF
 
 # Configure Nginx reverse proxy for kiwisdr.local
 echo "Configuring Nginx Proxy for kiwisdr.local"
@@ -150,6 +199,12 @@ server {
     client_max_body_size 1M;  # KiwiSDR doesn’t need large uploads
     client_body_buffer_size 128k;
 
+    # Custom error page
+    error_page 502 /custom_502.html;
+    location = /custom_502.html {
+        root /var/www/html;
+        internal;
+    }
 
     location / {
         proxy_pass http://127.0.0.1:8073;
