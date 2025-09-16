@@ -6,7 +6,7 @@ Make it trusted:
 ```bash
 echo "3CB2F77A8047BEDC:4:" | gpg --import-ownertrust >/dev/null
 ```
-To install nginx proxy:
+Install nginx proxy:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Ultraegern/kiwisdr-conf/refs/heads/main/nginx-proxy-setup.sh.asc -o nginx-proxy-setup.sh.asc && \
 curl -fsSL https://raw.githubusercontent.com/Ultraegern/kiwisdr-conf/refs/heads/main/nginx-proxy-setup.sh -o nginx-proxy-setup.sh && \
