@@ -3,70 +3,33 @@
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-# === Status printing helpers ===
-YELLOW="\033[0;33m"
-GREEN="\033[0;32m"
-GRAY="\033[0;90m"
-NC="\033[0m" # no color
-
-# Keep track of how many lines we printed so we can update them
-declare -A STATUS_LINES
-CURRENT_LINE=0
-
-status_line() {
-    local key="$1"
-    local state="$2"
-    local msg="$3"
-
-    case "$state" in
-        waiting)    prefix="[${GRAY}waiting   ${NC}]" ;;
-        progress)   prefix="[${YELLOW}in progress${NC}]" ;;
-        done)       prefix="[${GREEN}done      ${NC}]" ;;
-        *)          prefix="[????]" ;;
-    esac
-
-    if [[ -z "${STATUS_LINES[$key]:-}" ]]; then
-        # First time: print a new line
-        echo -e "${prefix} $msg"
-        ((CURRENT_LINE++))
-        STATUS_LINES[$key]=$CURRENT_LINE
-    else
-        # Update existing line
-        local line=${STATUS_LINES[$key]}
-        local move_up=$((CURRENT_LINE - line + 1))
-        echo -ne "\033[${move_up}F\033[2K${prefix} $msg\n"
-        # Move cursor back down
-        echo -ne "\033[$((move_up-1))E"
-    fi
-}
-
-# === Function to check if a command exists ===
+# Function to check if a command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# === Install nginx ===
-status_line nginx progress "Installing Nginx"
+# Install nginx if not installed
 if command_exists nginx; then
-    status_line nginx done "Nginx is already installed: $(nginx -v 2>&1)"
+    echo "✅ Nginx is already installed: $(nginx -v)"
 else
+    echo "Installing Nginx..."
     sudo apt update -qq
     sudo apt install -y -qq nginx
-    status_line nginx done "Nginx installed successfully: $(nginx -v 2>&1)"
+    echo "✅ Nginx installed successfully: $(nginx -v)"
 fi
 
-# === Install openssl ===
-status_line openssl progress "Installing OpenSSL"
+# Install openssl if not installed
 if command_exists openssl; then
-    status_line openssl done "OpenSSL is already installed: $(openssl version)"
+    echo "✅ OpenSSL is already installed: $(openssl version)"
 else
+    echo "Installing OpenSSL..."
     sudo apt update -qq
     sudo apt install -y -qq openssl
-    status_line openssl done "OpenSSL installed successfully: $(openssl version)"
+    echo "✅ OpenSSL installed successfully: $(openssl version)"
 fi
 
-# === Generate self-signed TLS certificate ===
-status_line cert progress "Generating self-signed TLS certificate"
+# Generate self-signed TLS certificate
+echo "Generating self-signed TLS certificate"
 SSL_DIR="/etc/ssl/kiwisdr"
 sudo mkdir -p "$SSL_DIR"
 sudo openssl req -x509 -nodes -days 90 \
@@ -75,11 +38,11 @@ sudo openssl req -x509 -nodes -days 90 \
   -keyout "$SSL_DIR/kiwisdr.key" \
   -out "$SSL_DIR/kiwisdr.crt" \
   >/dev/null
-status_line cert done "Self-signed TLS certificate created at $SSL_DIR"
+echo "✅ Self-signed TLS certificate created at $SSL_DIR"
 
 
-status_line systemd progress "Setting up monthly certificate renewal"
-# === Setup systemd renewal ===
+echo "Setting up monthly certificate renewal with systemd..."
+# Renewal script
 sudo tee /usr/local/bin/renew-proxy-cert.sh > /dev/null <<'EOF'
 #!/bin/bash
 set -euo pipefail
@@ -156,7 +119,8 @@ sudo systemctl daemon-reload
 sudo systemctl enable proxy-cert-renew.timer
 sudo systemctl start proxy-cert-renew.timer
 
-status_line systemd done "Monthly certificate renewal via systemd is set up. vew logs with: journalctl -u proxy-cert-renew.service"
+echo "✅ Monthly certificate renewal via systemd is set up."
+echo "ℹ️ To view certificate renewal logs: journalctl -u proxy-cert-renew.service"
 
 # Custom 502 error page
 sudo tee /var/www/html/502.html > /dev/null <<'EOF'
@@ -235,8 +199,8 @@ sudo tee /var/www/html/502.html > /dev/null <<'EOF'
 </html>
 EOF
 
-# === Configure Nginx ===
-status_line nginxconf progress "Configuring Nginx reverse proxy for kiwisdr.local"
+# Configure Nginx reverse proxy for kiwisdr.local
+echo "Configuring Nginx Proxy for kiwisdr.local"
 NGINX_CONF="/etc/nginx/sites-available/kiwisdr"
 sudo tee "$NGINX_CONF" > /dev/null <<'EOF'
 server {
@@ -303,4 +267,4 @@ sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/kiwisdr
 sudo nginx -t > /dev/null
 sudo systemctl reload nginx
 
-status_line nginxconf done "Nginx configured. Access KiwiSDR at https://kiwisdr.local"
+echo "✅ Nginx is configured. Access KiwiSDR at https://kiwisdr.local"
