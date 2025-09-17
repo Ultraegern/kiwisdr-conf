@@ -12,7 +12,7 @@ command_exists() {
 if command_exists nginx; then
     echo "✅ Nginx is already installed: $(nginx -v 2>&1)"
 else
-    echo "Installing Nginx..."
+    echo "⬜Installing Nginx..."
     sudo apt update -qq
     sudo apt install -y -qq nginx
     echo "✅ Nginx installed successfully: $(nginx -v 2>&1)"
@@ -22,14 +22,14 @@ fi
 if command_exists openssl; then
     echo "✅ OpenSSL is already installed: $(openssl version)"
 else
-    echo "Installing OpenSSL..."
+    echo "⬜Installing OpenSSL..."
     sudo apt update -qq
     sudo apt install -y -qq openssl
     echo "✅ OpenSSL installed successfully: $(openssl version)"
 fi
 
 # Generate self-signed TLS certificate
-echo "Generating self-signed TLS certificate"
+echo "⬜Generating self-signed TLS certificate"
 SSL_DIR="/etc/ssl/kiwisdr"
 sudo mkdir -p "$SSL_DIR"
 sudo openssl req -x509 -nodes -days 90 \
@@ -41,7 +41,7 @@ sudo openssl req -x509 -nodes -days 90 \
 echo "✅ Self-signed TLS certificate created at $SSL_DIR"
 
 
-echo "Setting up monthly certificate renewal with systemd..."
+echo "⬜Setting up monthly certificate renewal with systemd..."
 # Renewal script
 sudo tee /usr/local/bin/renew-proxy-cert.sh > /dev/null <<'EOF'
 #!/bin/bash
@@ -200,7 +200,7 @@ sudo tee /var/www/html/502.html > /dev/null <<'EOF'
 EOF
 
 # Configure Nginx reverse proxy for kiwisdr.local
-echo "Configuring Nginx Proxy for kiwisdr.local"
+echo "⬜Configuring Nginx Proxy for kiwisdr.local"
 NGINX_CONF="/etc/nginx/sites-available/kiwisdr"
 sudo tee "$NGINX_CONF" > /dev/null <<'EOF'
 server {
