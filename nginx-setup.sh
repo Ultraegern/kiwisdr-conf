@@ -274,8 +274,8 @@ sudo tee /var/www/html/recorder.html > /dev/null <<'EOF'
 </html>
 EOF
 
-# Configure Nginx reverse proxy for kiwisdr.local
-echo "⬜ Configuring Nginx Proxy for kiwisdr.local"
+# Configure Nginx
+echo "⬜ Configuring Nginx"
 NGINX_CONF="/etc/nginx/sites-available/kiwisdr"
 sudo tee "$NGINX_CONF" > /dev/null <<'EOF'
 server {
