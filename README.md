@@ -8,7 +8,7 @@ echo "3CB2F77A8047BEDC:4:" | gpg --import-ownertrust >/dev/null
 ```
 > ⚠️ **Warning:** Only trust keys from sources you verify. Running scripts signed by an unverified key could compromise your system.
 
-Install nginx proxy:
+Install and configure nginx as a proxy for KiwiSDR WebUI and a webserver for KiwiRecorder:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Ultraegern/kiwisdr-conf/refs/heads/main/nginx-proxy-setup.sh.asc -o nginx-proxy-setup.sh.asc && \
 curl -fsSL https://raw.githubusercontent.com/Ultraegern/kiwisdr-conf/refs/heads/main/nginx-proxy-setup.sh -o nginx-proxy-setup.sh && \
