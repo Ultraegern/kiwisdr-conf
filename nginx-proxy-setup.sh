@@ -291,7 +291,6 @@ server {
     ssl_certificate     /etc/ssl/kiwisdr/kiwisdr.crt;
     ssl_certificate_key /etc/ssl/kiwisdr/kiwisdr.key;
 
-
     #ssl_protocols       TLSv1.2 TLSv1.3; # Uncomment if TLSv1.3 is supported
     ssl_protocols       TLSv1.2;
     ssl_ciphers         HIGH:!aNULL:!MD5;
@@ -301,6 +300,8 @@ server {
     client_max_body_size 1M;  # KiwiSDR doesn’t need large uploads
     client_body_buffer_size 128k;
 
+    root /var/www/html;
+
     # Custom error page
     error_page 502 /502.html;
     location = /502.html {
@@ -308,9 +309,8 @@ server {
         internal;
     }
 
-    location /recorder {
-        alias /var/www/html/recorder.html;
-        internal;
+    location = /recorder {
+        try_files /recorder.html =404;
     }
 
     location / {
