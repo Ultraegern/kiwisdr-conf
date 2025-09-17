@@ -247,7 +247,7 @@ sudo tee /var/www/html/recorder.html > /dev/null <<'EOF'
       statusDiv.innerText = 'Starting recording...';
 
       try {
-        const res = await fetch('/start', {
+        const res = await fetch('/recorder/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ freq, bw, duration })
@@ -262,7 +262,7 @@ sudo tee /var/www/html/recorder.html > /dev/null <<'EOF'
     async function stopRecording() {
       statusDiv.innerText = 'Stopping recording...';
       try {
-        const res = await fetch('/stop', { method: 'POST' });
+        const res = await fetch('/recorder/stop', { method: 'POST' });
         const data = await res.json();
         statusDiv.innerText = data.message;
       } catch (e) {
