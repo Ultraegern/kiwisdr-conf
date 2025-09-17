@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>502 Bad Gateway</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 5%;
+    }
+    h1 {
+      font-size: 3em;
+    }
+    p {
+      font-size: 1.2em;
+      margin: 1em 0;
+    }
+    button {
+      padding: 0.6em 1.2em;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+     /* Dark theme (default) */
+    body {
+      background-color: #1e1e1e;
+      color: #f1f1f1;
+    }
+    h1 {
+      color: #ff5555;
+    }
+    button {
+      background-color: #444;
+      color: #fff;
+    }
+    button:hover {
+      background-color: #666;
+    }
+
+    /* Light theme (if system prefers light) */
+    @media (prefers-color-scheme: light) {
+      body {
+        background-color: #f1f1f1;
+        color: #1e1e1e;
+      }
+      h1 {
+        color: #ff0000;
+      }
+      button {
+        background-color: #ddd;
+        color: #000;
+      }
+      button:hover {
+        background-color: #bbb;
+      }
+    }
+  </style>
+  <script>
+    // Auto-refresh every 10 seconds
+    setTimeout(() => { window.location.reload(); }, 5000);
+  </script>
+</head>
+<body>
+  <h1>502 Bad Gateway</h1>  
+  <p>The KiwiSDR WebUI isn’t responding right now.</p>
+  <p>If You just booted the KiwiSDR, please wait.</p>
+  <p>This page will auto-refresh.</p>
+  <button onclick="window.location.reload();">Try Again Now</button>
+</body>
+</html>

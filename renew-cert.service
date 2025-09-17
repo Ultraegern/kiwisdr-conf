@@ -1,0 +1,8 @@
+[Unit]
+Description=Renew proxy self-signed SSL certificate
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/renew-proxy-cert.sh
+StandardOutput=journal
+StandardError=journal
