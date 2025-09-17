@@ -123,7 +123,7 @@ echo "✅ Monthly certificate renewal via systemd is set up."
 echo "ℹ️ To view certificate renewal logs: journalctl -u proxy-cert-renew.service"
 
 # Custom 502 error page
-sudo tee /var/www/html/custom_502.html > /dev/null <<'EOF'
+sudo tee /var/www/html/502.html > /dev/null <<'EOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -134,12 +134,9 @@ sudo tee /var/www/html/custom_502.html > /dev/null <<'EOF'
       font-family: sans-serif;
       text-align: center;
       padding: 5%;
-      background-color: #1e1e1e;
-      color: #f1f1f1;
     }
     h1 {
       font-size: 3em;
-      color: #ff5555;
     }
     p {
       font-size: 1.2em;
@@ -148,25 +145,54 @@ sudo tee /var/www/html/custom_502.html > /dev/null <<'EOF'
     button {
       padding: 0.6em 1.2em;
       font-size: 1em;
-      background-color: #444;
       border: none;
       border-radius: 8px;
-      color: #fff;
       cursor: pointer;
+    }
+
+     /* Dark theme (default) */
+    body {
+      background-color: #1e1e1e;
+      color: #f1f1f1;
+    }
+    h1 {
+      color: #ff5555;
+    }
+    button {
+      background-color: #444;
+      color: #fff;
     }
     button:hover {
       background-color: #666;
     }
+
+    /* Light theme (if system prefers light) */
+    @media (prefers-color-scheme: light) {
+      body {
+        background-color: #f1f1f1;
+        color: #1e1e1e;
+      }
+      h1 {
+        color: #ff0000;
+      }
+      button {
+        background-color: #ddd;
+        color: #000;
+      }
+      button:hover {
+        background-color: #bbb;
+      }
+    }
   </style>
   <script>
     // Auto-refresh every 10 seconds
-    setTimeout(() => { window.location.reload(); }, 10000);
+    setTimeout(() => { window.location.reload(); }, 5000);
   </script>
 </head>
 <body>
-  <h1>502 Bad Gateway</h1>
-  <p>The KiwiSDR backend isn’t responding right now.</p>
-  <p>Retrying automatically in 10 seconds...</p>
+  <h1>502 Bad Gateway</h1>  
+  <p>The KiwiSDR WebUI isn’t responding right now.</p>
+  <p>If You just booted the KiwiSDR, please wait 30 seconds.</p>
   <button onclick="window.location.reload();">Try Again Now</button>
 </body>
 </html>
@@ -200,8 +226,8 @@ server {
     client_body_buffer_size 128k;
 
     # Custom error page
-    error_page 502 /custom_502.html;
-    location = /custom_502.html {
+    error_page 502 /502.html;
+    location = /502.html {
         root /var/www/html;
         internal;
     }
