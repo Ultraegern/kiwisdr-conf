@@ -74,12 +74,12 @@ sudo openssl req -x509 -nodes -days 90 \
   -newkey rsa:2048 \
   -keyout "$SSL_DIR/kiwisdr.key" \
   -out "$SSL_DIR/kiwisdr.crt" \
-  >/dev/null
+  >/dev/null 2>&1
 status_line cert done "Self-signed TLS certificate created at $SSL_DIR"
 
 
-status_line systemd progress "Setting up monthly certificate renewal"
 # === Setup systemd renewal ===
+status_line systemd progress "Setting up monthly certificate renewal"
 sudo tee /usr/local/bin/renew-proxy-cert.sh > /dev/null <<'EOF'
 #!/bin/bash
 set -euo pipefail
