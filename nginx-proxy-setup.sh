@@ -10,12 +10,12 @@ command_exists() {
 
 # Install nginx if not installed
 if command_exists nginx; then
-    echo "✅ Nginx is already installed: $(nginx -v)"
+    echo "✅ Nginx is already installed: $(nginx -v 2>&1)"
 else
     echo "Installing Nginx..."
     sudo apt update -qq
     sudo apt install -y -qq nginx
-    echo "✅ Nginx installed successfully: $(nginx -v)"
+    echo "✅ Nginx installed successfully: $(nginx -v 2>&1)"
 fi
 
 # Install openssl if not installed
@@ -37,7 +37,7 @@ sudo openssl req -x509 -nodes -days 90 \
   -newkey rsa:2048 \
   -keyout "$SSL_DIR/kiwisdr.key" \
   -out "$SSL_DIR/kiwisdr.crt" \
-  >/dev/null
+  >/dev/null 2>&1
 echo "✅ Self-signed TLS certificate created at $SSL_DIR"
 
 
