@@ -192,7 +192,7 @@ sudo tee /var/www/html/502.html > /dev/null <<'EOF'
 <body>
   <h1>502 Bad Gateway</h1>  
   <p>The KiwiSDR WebUI isn’t responding right now.</p>
-  <p>If You just booted the KiwiSDR, please wait 30 seconds.</p>
+  <p>If You just booted the KiwiSDR, please wait.</p>
   <p>This page will auto-refresh.</p>
   <button onclick="window.location.reload();">Try Again Now</button>
 </body>
