@@ -199,6 +199,81 @@ sudo tee /var/www/html/502.html > /dev/null <<'EOF'
 </html>
 EOF
 
+# Recorder front end
+sudo tee /var/www/html/recorder.html > /dev/null <<'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KiwiRecorder Controller</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
+    label { display: block; margin-top: 10px; }
+    button { margin-top: 20px; padding: 10px 20px; }
+  </style>
+</head>
+<body>
+  <h1>KiwiRecorder Controller</h1>
+
+  <label>
+    Frequency (kHz):
+    <input type="number" id="freq" value="15000" min="3000" max="30000">
+  </label>
+
+  <label>
+    Bandwidth (Hz):
+    <input type="number" id="bw" value="3000" min="100" max="32000">
+  </label>
+
+  <label>
+    Duration (seconds):
+    <input type="number" id="duration" value="60" min="1">
+  </label>
+
+  <button onclick="startRecording()">Start Recording</button>
+  <button onclick="stopRecording()">Stop Recording</button>
+
+  <div id="status"></div>
+
+  <script>
+    const statusDiv = document.getElementById('status');
+
+    async function startRecording() {
+      const freq = document.getElementById('freq').value;
+      const bw = document.getElementById('bw').value;
+      const duration = document.getElementById('duration').value;
+
+      statusDiv.innerText = 'Starting recording...';
+
+      try {
+        const res = await fetch('/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ freq, bw, duration })
+        });
+        const data = await res.json();
+        statusDiv.innerText = data.message;
+      } catch (e) {
+        statusDiv.innerText = 'Error: ' + e;
+      }
+    }
+
+    async function stopRecording() {
+      statusDiv.innerText = 'Stopping recording...';
+      try {
+        const res = await fetch('/stop', { method: 'POST' });
+        const data = await res.json();
+        statusDiv.innerText = data.message;
+      } catch (e) {
+        statusDiv.innerText = 'Error: ' + e;
+      }
+    }
+  </script>
+</body>
+</html>
+EOF
+
 # Configure Nginx reverse proxy for kiwisdr.local
 echo "⬜ Configuring Nginx Proxy for kiwisdr.local"
 NGINX_CONF="/etc/nginx/sites-available/kiwisdr"
@@ -230,6 +305,11 @@ server {
     error_page 502 /502.html;
     location = /502.html {
         root /var/www/html;
+        internal;
+    }
+
+    location /recorder {
+        root /var/www/html
         internal;
     }
 
