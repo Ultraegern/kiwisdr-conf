@@ -309,9 +309,8 @@ server {
     }
 
     location /recorder {
-        root /var/www/html;
+        alias /var/www/html/recorder.html;
         internal;
-        index recorder.html;
     }
 
     location / {
