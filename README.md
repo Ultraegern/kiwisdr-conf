@@ -15,5 +15,5 @@ unzip /tmp/kiwisdr-conf.zip -d /tmp/kiwisdr-conf && \
 rm /tmp/kiwisdr-conf.zip && \
 cd /tmp/kiwisdr-conf && \
 gpg --verify setup.sh.asc setup.sh 2>/dev/null && \
-./setup.sh
+sudo ./setup.sh
 ```
