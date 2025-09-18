@@ -32,8 +32,10 @@ fi
 
 # Generate self-signed TLS certificate
 echo "⬜ Generating self-signed TLS certificate"
+
 verify_signature ./cert/renew-cert.sh && sudo ./cert/renew-cert.sh
-echo "✅ Self-signed TLS certificate created at $SSL_DIR"
+
+echo "✅ Self-signed TLS certificate created at /etc/ssl/kiwisdr"
 
 
 echo "⬜ Setting up monthly certificate renewal with systemd..."
