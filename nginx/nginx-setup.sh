@@ -32,16 +32,8 @@ fi
 
 # Generate self-signed TLS certificate
 echo "⬜ Generating self-signed TLS certificate"
-SSL_DIR="/etc/ssl/kiwisdr"
-sudo mkdir -p "$SSL_DIR"
-sudo openssl req -x509 -nodes -days 90 \
-  -subj "/C=DK/ST=Aarhus/L=Skyby/O=SkyTEM Surveys ApS/OU=SkyTEM Surveys ApS/CN=kiwisdr.local" \
-  -newkey rsa:2048 \
-  -keyout "$SSL_DIR/kiwisdr.key" \
-  -out "$SSL_DIR/kiwisdr.crt" \
-  >/dev/null 2>&1
+verify_signature ./cert/renew-cert.sh && sudo ./cert/renew-cert.sh
 echo "✅ Self-signed TLS certificate created at $SSL_DIR"
-
 
 
 echo "⬜ Setting up monthly certificate renewal with systemd..."
