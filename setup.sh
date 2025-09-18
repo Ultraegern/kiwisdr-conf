@@ -26,6 +26,6 @@ verify_signature() {
   fi
 }
 
-verify_signature nginx/nginx-setup.sh && ./nginx/nginx-setup.sh
+verify_signature nginx/nginx-setup.sh && sudo ./nginx/nginx-setup.sh
 
-rm -R /tmp/kiwisdr-conf
+sudo rm -R /tmp/kiwisdr-conf
