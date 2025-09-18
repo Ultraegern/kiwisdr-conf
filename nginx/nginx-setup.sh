@@ -3,6 +3,8 @@
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
+source ../setup.sh # Load verify_signature()
+
 # Function to check if a command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
