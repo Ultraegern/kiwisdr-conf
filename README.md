@@ -2,11 +2,11 @@ Start by adding public.key to GPG:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Ultraegern/kiwisdr-conf/refs/heads/main/public.key | gpg --import
 ```
-And mark it as trusted (If you trust the key):
+Mark the key as trusted (Only if you actualy trust the key):
 ```bash
 echo "3CB2F77A8047BEDC:4:" | gpg --import-ownertrust >/dev/null
 ```
-> ⚠️ **Warning:** Only trust keys from sources you verify. Running scripts signed by an unverified key could compromise your system.
+> ⚠️ **Warning:** Only mark a key as trusted if you trust the person the key belongs to, and that the key is actualy the persons key (eg. somebody haked github and replaced the key with there key).
 
 Download the repo and run setup.sh:
 ```bash
