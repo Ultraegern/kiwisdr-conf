@@ -27,5 +27,6 @@ verify_signature() {
 }
 
 verify_signature nginx/nginx-setup.sh && sudo ./nginx/nginx-setup.sh
+verifi_signature recorder/kiwiclient/kiwiclient-setup.sh && sudo ./recorder/kiwiclient/kiwiclient-setup.sh
 
 sudo rm -R /tmp/kiwisdr-conf
