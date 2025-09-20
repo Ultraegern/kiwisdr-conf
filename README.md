@@ -1,3 +1,4 @@
+#Installation Instructions
 Start by adding public.key to your keyring:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Ultraegern/kiwisdr-conf/refs/heads/main/public.key | gpg --import
