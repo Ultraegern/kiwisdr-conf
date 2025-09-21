@@ -1,5 +1,5 @@
 [Unit]
-Description=Run proxy cert renewal monthly
+Description=Run TLS cert renewal monthly
 
 # Midnight on the first day of every month
 [Timer]
