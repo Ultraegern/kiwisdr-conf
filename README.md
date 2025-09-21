@@ -9,7 +9,7 @@ Mark the key as trusted (Only if you actualy trust the key):
 ```bash
 echo "3CB2F77A8047BEDC:4:" | gpg --import-ownertrust >/dev/null
 ```
-> ⚠️ **Warning:** Only mark a key as trusted if you trust the person the key belongs to, and that the key is actually that person's key (eg. somebody hacked Github and replaced the key with there key).
+> ⚠️ **Warning:** Only mark a key as trusted if you trust the person the key belongs to, and that the key is actually that person's key (eg. somebody hacked Github and replaced the key with their key).
 
 Download the repository and run setup.sh:
 ```bash
