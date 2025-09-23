@@ -10,6 +10,6 @@ gpg --batch --yes --armor --detach-sign --output html/recorder.html.asc html/rec
 gpg --batch --yes --armor --detach-sign --output nginx/nginx-setup.sh.asc nginx/nginx-setup.sh
 gpg --batch --yes --armor --detach-sign --output nginx/nginx.conf.asc nginx/nginx.conf
 
-gpg --batch --yes --armor --detach-sign --output /recorder/kiwiclient/kiwiclient-setup.sh.asc /recorder/kiwiclient/kiwiclient-setup.sh
+#gpg --batch --yes --armor --detach-sign --output /recorder/kiwiclient/kiwiclient-setup.sh.asc /recorder/kiwiclient/kiwiclient-setup.sh
 
 gpg --batch --yes --armor --detach-sign --output setup.sh.asc setup.sh
