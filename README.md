@@ -16,7 +16,7 @@ Download the repository and run setup.sh:
 curl -fsSL https://github.com/Ultraegern/kiwisdr-conf/archive/refs/heads/main.zip -o /tmp/kiwisdr-conf.zip && \
 unzip /tmp/kiwisdr-conf.zip -d /tmp/kiwisdr-conf && \
 rm /tmp/kiwisdr-conf.zip && \
-cd /tmp/kiwisdr-conf && \
+cd /tmp/kiwisdr-conf/kiwisdr-conf-main && \
 gpg --verify setup.sh.asc setup.sh 2>/dev/null && \
 sudo ./setup.sh
 ```
