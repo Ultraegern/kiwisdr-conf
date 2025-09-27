@@ -32,11 +32,36 @@
     button:hover {
         background-color: #555555;
     }
-    label {
-        font-size: 1.2em;
-        display: block;
-        margin-top: 10px;
+
+    input[type="number"] {
+        margin-top: 5px;
+        padding: 0.5em 0.8em;
+        font-size: 1.1em;
+        border: 2px solid #555555;
+        border-radius: 8px;
+        background-color: #2a2a2a;
+        color: #f1f1f1;
+        width: 150px;
+        text-align: center;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        -moz-appearance: textfield; /* Remove spinners in Firefox */
     }
+    /* Chrome, Safari, Edge: remove arrows */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    input[type="number"]:hover {
+        border-color: #ff5555;
+    }
+    input[type="number"]:focus {
+        outline: none;
+        border-color: #ff5555;
+        box-shadow: 0 0 8px rgba(255, 85, 85, 0.5);
+    }
+
+    /* Background gradient */
     .background {
         position:fixed;
         top:0;
@@ -66,6 +91,18 @@
         }
         .background {
         background: linear-gradient(-45deg, #f2f2f2, #e7b0be, #a0d1e5, #b0e5b7);
+        }
+        input[type="number"] {
+            background-color: #ffffff;
+            color: #1e1e1e;
+            border: 2px solid #cccccc;
+        }
+        input[type="number"]:hover {
+            border-color: #ff0000;
+        }
+        input[type="number"]:focus {
+            border-color: #ff0000;
+            box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
         }
     }
 </style>
