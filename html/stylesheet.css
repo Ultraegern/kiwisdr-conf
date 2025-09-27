@@ -1,5 +1,9 @@
 <style>
     /* Dark theme + Spaceing */
+    .fake-class { /* Apparently the first item isn't applied */
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
     body {
         font-family: sans-serif;
         text-align: center;
@@ -33,7 +37,7 @@
         display: block;
         margin-top: 10px;
     }
-
+    
     /* Light theme (if system prefers light) */
     @media (prefers-color-scheme: light) {
         body {
