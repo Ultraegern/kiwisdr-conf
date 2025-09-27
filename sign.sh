@@ -6,6 +6,7 @@ gpg --batch --yes --armor --detach-sign --output cert/renew-cert.sh.asc cert/ren
 
 gpg --batch --yes --armor --detach-sign --output html/502.html.asc html/502.html
 gpg --batch --yes --armor --detach-sign --output html/recorder.html.asc html/recorder.html
+gpg --batch --yes --armor --detach-sign --output html/stylesheet.css.asc html/stylesheet.css
 
 gpg --batch --yes --armor --detach-sign --output nginx/nginx-setup.sh.asc nginx/nginx-setup.sh
 gpg --batch --yes --armor --detach-sign --output nginx/nginx.conf.asc nginx/nginx.conf
