@@ -37,7 +37,17 @@
         display: block;
         margin-top: 10px;
     }
-    
+    .background {
+        position:fixed;
+        top:0;
+        left:0;
+        right:0;
+        bottom:0;
+        z-index:-1;
+        
+        background: linear-gradient(45deg, #2e2e2e, #4b2c3b, #1a3a4b, #1e4b3d);
+        background-size: 150% 150%;
+    }
     /* Light theme (if system prefers light) */
     @media (prefers-color-scheme: light) {
         body {
@@ -53,6 +63,9 @@
         }
         button:hover {
             background-color: #cccccc;
+        }
+        .background {
+        background: linear-gradient(-45deg, #ffb3b3, #e680a2, #66c2ff, #66ffc2);
         }
     }
 </style>
