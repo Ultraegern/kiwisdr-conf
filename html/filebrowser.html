@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SDR Recordings Browser</title>
+  <link rel="stylesheet" href="stylesheet.css">
+</head>
+<body>
+	<div class="background"></div>
+	<h1>SDR Recordings</h1>
+	<p>Browse and download your recordings below:</p>
+
+	<div id="file-container"></div>
+
+	<script>
+		const LIST_URL = '/recorder/list.json';
+		const DOWNLOAD_URL = '/recorder/download/';
+
+		async function fetchFiles() {
+			try {
+			const response = await fetch(LIST_URL);
+			const files = await response.json();
+			renderFiles(files);
+			} catch (err) {
+			document.getElementById('file-container').innerHTML = `<p>Failed to load files: ${err}</p>`;
+			}
+		}
+
+		function renderFiles(files) {
+			const container = document.getElementById('file-container');
+			if (!files.length) {
+			container.innerHTML = '<p>No recordings found.</p>';
+			return;
+			}
+
+			files.forEach(file => {
+			const fileRow = document.createElement('div');
+			fileRow.className = 'field';
+
+			const nameSpan = document.createElement('span');
+			const size = (file.size / 1024 / 1024).toFixed(1) + ' MB';
+			const date = new Date(file.mtime * 1000).toLocaleString();
+			nameSpan.textContent = `${file.name}  (${size}, ${date})`;
+
+			const downloadBtn = document.createElement('button');
+			downloadBtn.textContent = 'Download';
+			downloadBtn.onclick = () => {
+					window.open(DOWNLOAD_URL + file.name, '_blank');
+			};
+
+			fileRow.appendChild(nameSpan);
+			fileRow.appendChild(downloadBtn);
+			container.appendChild(fileRow);
+			});
+    }
+
+	fetchFiles();
+	</script>
+</body>
+</html>
