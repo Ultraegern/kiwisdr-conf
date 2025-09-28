@@ -1,5 +1,5 @@
 <style>
-    /* Dark theme + Spaceing */
+    /* Dark theme colors and Spacing */
     .fake-class { /* Apparently the first item isn't applied */
         margin-top: 20px;
         margin-bottom: 20px;
@@ -120,15 +120,15 @@
             border-color: #ff0000;
             box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
         }
-        input[type="number"] {
+        .field input[type="number"] {
             background-color: #ffffff;
             color: #1e1e1e;
             border: 2px solid #cccccc;
         }
-        input[type="number"]:hover {
+        .field input[type="number"]:hover {
             border-color: #ff0000;
         }
-        input[type="number"]:focus {
+        .field input[type="number"]:focus {
             border-color: #ff0000;
             box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
         }
