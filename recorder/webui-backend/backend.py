@@ -45,4 +45,4 @@ def stop_recording() -> tuple[Dict[str, str], int] | Dict[str, str]:
         return {"message": f"Error stopping recording: {e}"}, 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
