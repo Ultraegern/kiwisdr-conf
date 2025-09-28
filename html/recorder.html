@@ -42,7 +42,7 @@
       statusDiv.innerText = 'Starting recording...';
 
       try {
-        const res = await fetch('/recorder/start', {
+        const res = await fetch('/api/recorder/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ frequency, bandwidth, duration })
@@ -57,7 +57,7 @@
     async function stopRecording() {
       statusDiv.innerText = 'Stopping recording...';
       try {
-        const res = await fetch('/recorder/stop', { method: 'POST' });
+        const res = await fetch('/api/recorder/stop', { method: 'POST' });
         const data = await res.json();
         statusDiv.innerText = data.message;
       } catch (e) {
