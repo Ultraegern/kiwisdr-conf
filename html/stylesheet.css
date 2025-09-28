@@ -19,7 +19,7 @@
         color: #ff5555;
     }
     p {
-        margin-bottom: 10px;
+        margin-bottom: 5px;
     }
     span {
         margin-bottom: 10px;
@@ -27,6 +27,7 @@
     button {
         margin-left: 15px;
         margin-bottom: 10px;
+        margin-top: 10px;
         font-size: 1.0em;
         padding: 0.6em 1.2em;
         border-radius: 8px;
@@ -50,13 +51,13 @@
         justify-content: space-between;
         align-items: center;
         padding: 4px 8px;
-        margin-bottom: 10px;
         width: 350px;
     }
     .field-group {
         display: flex;
         flex-direction: column;     /* stack all label-groups */
         align-items: center;              /* optional: fix width for alignment */
+        margin-bottom: 15px;
     }
     .field input[type="number"] {
         margin-bottom: 5px;
