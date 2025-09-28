@@ -10,17 +10,17 @@
   <div class="background"></div>
   <h1>KiwiRecorder</h1>
   <p>Use this interface to start and stop recordings on the KiwiSDR.</p>
-  <div class="label-group">
-    <label>
+  <div class="field-group">
+    <label class="field">
       <span>Frequency (kHz):</span>
-      <input type="number" id="freq" value="15000" min="3000" max="30000">
+      <input type="number" id="frequency" value="15000" min="3000" max="30000">
     </label>
-    <label>
+    <label class="field">
       <span>Bandwidth (Hz):</span>
-      <input type="number" id="bw" value="3000" min="100" max="32000">
+      <input type="number" id="bandwidth" value="3000" min="100" max="32000">
     </label>
-    <label>
-      <span>Duration (seconds):</span>
+    <label class="field">
+      <span>Duration (sec):</span>
       <input type="number" id="duration" value="60" min="1">
     </label>
   </div>
@@ -35,8 +35,8 @@
     const statusDiv = document.getElementById('status');
 
     async function startRecording() {
-      const freq = document.getElementById('freq').value;
-      const bw = document.getElementById('bw').value;
+      const frequency = document.getElementById('frequency').value;
+      const bandwidth = document.getElementById('bandwidth').value;
       const duration = document.getElementById('duration').value;
 
       statusDiv.innerText = 'Starting recording...';
@@ -45,7 +45,7 @@
         const res = await fetch('/recorder/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ freq, bw, duration })
+          body: JSON.stringify({ frequency, bandwidth, duration })
         });
         const data = await res.json();
         statusDiv.innerText = data.message;
