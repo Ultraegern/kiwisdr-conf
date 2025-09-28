@@ -17,24 +17,35 @@
     }
     p {
         font-size: 1.2em;
-        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    span {
+        font-size: 1.2em;
+        margin-bottom: 10px;
     }
     button {
-        margin-top: 10px;
+        margin-left: 15px;
+        margin-bottom: 10px;
         padding: 0.6em 1.2em;
-        font-size: 1em;
-        border: none;
+        font-size: 1.2em;
+        border: 2px solid #555555;
         border-radius: 8px;
+        background-color: #2a2a2a;
+        color: #f1f1f1;
         cursor: pointer;
-        background-color: #444444;
-        color: #ffffff;
+        transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
     }
     button:hover {
-        background-color: #555555;
+        border-color: #ff5555;
+        background-color: #2f2f2f;
     }
-
+    button:focus {
+        outline: none;
+        border-color: #ff5555;
+        box-shadow: 0 0 8px rgba(255, 85, 85, 0.5);
+    }
     input[type="number"] {
-        margin-top: 5px;
+        margin-bottom: 5px;
         padding: 0.5em 0.8em;
         font-size: 1.1em;
         border: 2px solid #555555;
@@ -46,9 +57,17 @@
         transition: border-color 0.2s, box-shadow 0.2s;
         -moz-appearance: textfield; /* Remove spinners in Firefox */
     }
-    /* Chrome, Safari, Edge: remove arrows */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
+    label {
+        margin-bottom: 10px;
+    }
+    .label-group {
+        display: flex;
+        flex-direction: column;     /* stack all label-groups */
+        align-items: center;              /* optional: fix width for alignment */
+    }
+    
+    input[type="number"]::-webkit-inner-spin-button, /* Remove spinners in Chrome, Safari, Edge */
+    input[type="number"]::-webkit-outer-spin-button { /* Remove spinners in Chrome, Safari, Edge */
         -webkit-appearance: none;
         margin: 0;
     }
@@ -60,8 +79,6 @@
         border-color: #ff5555;
         box-shadow: 0 0 8px rgba(255, 85, 85, 0.5);
     }
-
-    /* Background gradient */
     .background {
         position:fixed;
         top:0;
@@ -79,18 +96,24 @@
             background-color: #f1f1f1;
             color: #1e1e1e;
         }
+        .background {
+        background: linear-gradient(-45deg, #f2f2f2, #e7b0be, #a0d1e5, #b0e5b7);
+        }
         h1 {
             color: #ff0000;
         }
         button {
-            background-color: #dddddd;
-            color: #000000;
+            background-color: #ffffff;
+            color: #1e1e1e;
+            border: 2px solid #cccccc;
         }
         button:hover {
-            background-color: #cccccc;
+            border-color: #ff0000;       
+            background-color: #f7f7f7;       
         }
-        .background {
-        background: linear-gradient(-45deg, #f2f2f2, #e7b0be, #a0d1e5, #b0e5b7);
+        button:focus {
+            border-color: #ff0000;
+            box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
         }
         input[type="number"] {
             background-color: #ffffff;

@@ -9,21 +9,22 @@
 <body>
   <div class="background"></div>
   <h1>KiwiRecorder</h1>
+  <p>Use this interface to start and stop recordings on the KiwiSDR.</p>
+  <div class="label-group">
+    <label>
+      <span>Frequency (kHz):</span>
+      <input type="number" id="freq" value="15000" min="3000" max="30000">
+    </label>
+    <label>
+      <span>Bandwidth (Hz):</span>
+      <input type="number" id="bw" value="3000" min="100" max="32000">
+    </label>
+    <label>
+      <span>Duration (seconds):</span>
+      <input type="number" id="duration" value="60" min="1">
+    </label>
+  </div>
 
-  <label>
-    Frequency (kHz):
-    <input type="number" id="freq" value="15000" min="3000" max="30000">
-  </label>
-
-  <label>
-    Bandwidth (Hz):
-    <input type="number" id="bw" value="3000" min="100" max="32000">
-  </label>
-
-  <label>
-    Duration (seconds):
-    <input type="number" id="duration" value="60" min="1">
-  </label>
 
   <button onclick="startRecording()">Start Recording</button>
   <button onclick="stopRecording()">Stop Recording</button>
