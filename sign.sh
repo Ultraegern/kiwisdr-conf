@@ -13,6 +13,8 @@ gpg --batch --yes --armor --detach-sign --output nginx/nginx-setup.sh.asc nginx/
 gpg --batch --yes --armor --detach-sign --output nginx/nginx.conf.asc nginx/nginx.conf
 
 gpg --batch --yes --armor --detach-sign --output recorder/kiwiclient/kiwiclient-setup.sh.asc recorder/kiwiclient/kiwiclient-setup.sh
+gpg --batch --yes --armor --detach-sign --output recorder/webui-backend/backend-setup.sh.asc recorder/webui-backend/backend-setup.sh
+gpg --batch --yes --armor --detach-sign --output recorder/webui-backend/backend.service.asc recorder/webui-backend/backend.service
 gpg --batch --yes --armor --detach-sign --output recorder/webui-backend/backend.py.asc recorder/webui-backend/backend.py
 
 gpg --batch --yes --armor --detach-sign --output setup.sh.asc setup.sh

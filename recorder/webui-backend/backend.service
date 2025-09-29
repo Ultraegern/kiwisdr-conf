@@ -1,0 +1,13 @@
+[Unit]
+Description=Recorder Backend Flask Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/bin/recorder-backend.py
+WorkingDirectory=/usr/local/bin
+Restart=always
+User=root
+Environment=FLASK_ENV=production
+
+[Install]
+WantedBy=multi-user.target
