@@ -58,6 +58,7 @@ sudo systemctl start proxy-cert-renew.timer
 echo "✅ Monthly certificate renewal via systemd is set up."
 echo "ℹ️ To view certificate renewal logs: journalctl -u proxy-cert-renew.service"
 
+verify_signature $DIR/html/stylesheet.css && sudo cp $DIR/html/stylesheet.css /var/www/html/stylesheet.css
 
 # Custom 502 error page
 verify_signature $DIR/html/502.html && sudo cp $DIR/html/502.html /var/www/html/502.html
