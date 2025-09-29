@@ -26,7 +26,12 @@ verify_signature() {
   fi
 }
 
-verify_signature nginx/nginx-setup.sh && sudo ./nginx/nginx-setup.sh
-#verify_signature recorder/kiwiclient/kiwiclient-setup.sh && sudo ./recorder/kiwiclient/kiwiclient-setup.sh
+# Check if the script is being run directly
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  verify_signature nginx/nginx-setup.sh && sudo ./nginx/nginx-setup.sh
+  #verify_signature recorder/kiwiclient/kiwiclient-setup.sh && sudo ./recorder/kiwiclient/kiwiclient-setup.sh
+fi
+
+
 
 sudo rm -R /tmp/kiwisdr-conf-main
