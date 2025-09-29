@@ -14,10 +14,11 @@ echo "3CB2F77A8047BEDC:4:" | gpg --import-ownertrust >/dev/null
 Download the repository and run setup.sh:
 ```bash
 curl -fsSL https://github.com/Ultraegern/kiwisdr-conf/archive/refs/heads/main.zip -o /tmp/kiwisdr-conf.zip && \
-sudo apt install unzip && \
+sudo apt install unzip -qq && \
 unzip -qq /tmp/kiwisdr-conf.zip -d /tmp/ && \
 rm /tmp/kiwisdr-conf.zip && \
 cd /tmp/kiwisdr-conf-main && \
 gpg --verify setup.sh.asc setup.sh 2>/dev/null && \
+sudo chmod +x setup.sh && \
 sudo ./setup.sh
 ```
