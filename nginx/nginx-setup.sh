@@ -3,7 +3,7 @@
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-source ../setup.sh # Load verify_signature()
+source /tmp/kiwisdr-conf-main/setup.sh # Load verify_signature()
 
 # Function to check if a command exists
 command_exists() {
