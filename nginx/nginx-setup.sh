@@ -4,6 +4,7 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
 source /tmp/kiwisdr-conf-main/setup.sh # Load verify_signature()
+DIR=/tmp/kiwisdr-conf-main
 
 # Function to check if a command exists
 command_exists() {
@@ -33,7 +34,7 @@ fi
 # Generate self-signed TLS certificate
 echo "⬜ Generating self-signed TLS certificate"
 
-verify_signature ./cert/renew-cert.sh && sudo ./cert/renew-cert.sh
+verify_signature $DIR/cert/renew-cert.sh && sudo $DIR/cert/renew-cert.sh
 
 echo "✅ Self-signed TLS certificate created at /etc/ssl/kiwisdr"
 
@@ -41,13 +42,13 @@ echo "✅ Self-signed TLS certificate created at /etc/ssl/kiwisdr"
 echo "⬜ Setting up monthly certificate renewal with systemd..."
 
 # Renewal script
-verify_signature ./cert/renew-cert.sh && sudo cp ./cert/renew-cert.sh /usr/local/bin/renew-proxy-cert.sh
+verify_signature $DIR/cert/renew-cert.sh && sudo cp $DIR/cert/renew-cert.sh /usr/local/bin/renew-proxy-cert.sh
 
 # Systemd service with logging
-verify_signature ./cert/renew-cert.service && sudo cp ./cert/renew-cert.service /etc/systemd/system/proxy-cert-renew.service
+verify_signature $DIR/cert/renew-cert.service && sudo cp $DIR/cert/renew-cert.service /etc/systemd/system/proxy-cert-renew.service
 
 # Systemd timer
-verify_signature ./cert/renew-cert.timer && sudo cp ./cert/renew-cert.timer /etc/systemd/system/proxy-cert-renew.timer
+verify_signature $DIR/cert/renew-cert.timer && sudo cp $DIR/cert/renew-cert.timer /etc/systemd/system/proxy-cert-renew.timer
 
 # Enable and start the timer
 sudo systemctl daemon-reload
@@ -59,14 +60,14 @@ echo "ℹ️ To view certificate renewal logs: journalctl -u proxy-cert-renew.se
 
 
 # Custom 502 error page
-verify_signature html/502.html && sudo cp html/502.html /var/www/html/502.html
+verify_signature $DIR/html/502.html && sudo cp $DIR/html/502.html /var/www/html/502.html
 
 # Recorder front end
-verify_signature html/recorder.html && sudo cp html/recorder.html /var/www/html/recorder.html
+verify_signature $DIR/html/recorder.html && sudo cp $DIR/html/recorder.html /var/www/html/recorder.html
 
 # Configure Nginx
 echo "⬜ Configuring Nginx"
-verify_signature nginx/nginx.conf && sudo cp nginx/nginx.conf /etc/nginx/sites-available/kiwisdr
+verify_signature $DIR/nginx/nginx.conf && sudo cp $DIR/nginx/nginx.conf /etc/nginx/sites-available/kiwisdr
 
 # Enable the site
 sudo ln -sf /etc/nginx/sites-available/kiwisdr /etc/nginx/sites-enabled/kiwisdr
