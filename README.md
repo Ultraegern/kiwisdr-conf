@@ -17,7 +17,8 @@ curl -fsSL https://github.com/Ultraegern/kiwisdr-conf/archive/refs/heads/main.zi
 sudo apt install unzip -qq 1>/dev/null && \
 unzip -qq /tmp/kiwisdr-conf.zip -d /tmp/ && \
 rm /tmp/kiwisdr-conf.zip && \
-cd /tmp/kiwisdr-conf-main && \
+mv /tmp/kiwisdr-conf-main /tmp/kiwisdr-conf && \
+cd /tmp/kiwisdr-conf && \
 gpg --verify setup.sh.asc setup.sh 2>/dev/null && \
 sudo chmod +x setup.sh && \
 sudo ./setup.sh
