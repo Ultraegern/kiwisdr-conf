@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Clickable Card (HTML + CSS)</title>
+  <style>
+    :root{
+      --card-width: 340px;
+      --radius: 16px;
+      --bg: #ffffff;
+      --muted: #6b7280;
+      --accent: #4f46e5;
+      --shadow: 0 6px 18px rgba(16,24,40,0.08);
+    }
+
+    body{
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg,#f7f7fb, #ffffff);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:100vh;
+      margin:0;
+      padding:32px;
+    }
+
+    /* Entire card is a link */
+    .card{
+      display:block;
+      width:var(--card-width);
+      text-decoration:none;
+      color:inherit;
+      border-radius:var(--radius);
+      overflow:hidden;
+      transform-origin:center;
+      transition:transform .28s cubic-bezier(.2,.9,.3,1), box-shadow .28s ease;
+      box-shadow:var(--shadow);
+      background:var(--bg);
+    }
+
+    .card:focus{
+      outline:3px solid rgba(79,70,229,0.12);
+      outline-offset:4px;
+    }
+
+    /* top image */
+    .card-media{
+      height:180px;
+      background-size:cover;
+      background-position:center;
+      position:relative;
+      display:block;
+    }
+
+    .card-media::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.2) 60%);
+      pointer-events:none;
+    }
+
+    .card-title{
+      padding:18px 18px 12px 18px;
+      font-weight:700;
+      font-size:1.05rem;
+      line-height:1.2;
+    }
+
+    .card-body{
+      padding:0 18px 18px 18px;
+      color:var(--muted);
+      font-size:0.95rem;
+      line-height:1.45;
+    }
+
+    /* Animate card as a whole, keep all contents fixed relative to card */
+    .card:hover,
+    .card:focus{
+      transform: translateY(-8px) scale(1.01);
+      box-shadow: 0 12px 30px rgba(16,24,40,0.12);
+    }
+
+    .kicker{
+      display:inline-block;
+      font-size:0.8rem;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(79,70,229,0.08);
+      color:var(--accent);
+      font-weight:600;
+      margin-right:10px;
+    }
+
+    @media (max-width:420px){
+      :root{ --card-width:92vw; }
+      .card-media{ height:150px; }
+    }
+  </style>
+</head>
+<body>
+
+  <a class="card" href="#" aria-label="View details for the sample card">
+    <div class="card-media" style="background-image:url('https://images.unsplash.com/photo-1505678261036-a3fcc5e884ee?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=');"></div>
+
+    <div class="card-title">
+      <span class="kicker">New</span>
+      Serene Mountains — Travel Guide
+    </div>
+
+    <div class="card-body">
+      A short description that sits in the bottom section of the card. Use this area for a short summary, meta info, or a callout. The whole card is clickable and moves as one rigid piece.
+    </div>
+  </a>
+
+</body>
+</html>
