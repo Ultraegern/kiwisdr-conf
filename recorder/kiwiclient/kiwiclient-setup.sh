@@ -16,8 +16,8 @@ else
     echo "⬜ Refreshing package lists..."
     sudo apt update -qq
     echo "⬜ Installing dependencies..."
-    sudo apt install -qq -y python3 python3-pip git build-essential cmake libsamplerate0
-    pip3 install numpy
+    sudo apt install -qq -y python3 python3-pip git make libsamplerate0
+    sudo apt install -qq -y python3-numpy python3-cffi
 
     echo "⬜ Cloning kiwiclient repository..."
     sudo mkdir -p /usr/local/src
