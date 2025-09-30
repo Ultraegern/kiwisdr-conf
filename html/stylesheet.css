@@ -127,10 +127,6 @@
         background:var(--main-color-medium);
         width:100%;
     }
-    .card:focus{
-        outline:3px solid var(--accent-color);
-        outline-offset:4px;
-    }
     .card-media{
         height:180px;
         background-size:cover;
@@ -162,6 +158,7 @@
     .card:focus{
         transform: translateY(-8px) scale(1.01);
         box-shadow:var(--main-shadow-effect);
+        outline:3px solid var(--accent-color);
     }
     @media (prefers-color-scheme: light) { /* Light theme (if system prefers light) */
         .background {
