@@ -4,19 +4,29 @@
         margin-top: 20px;
         margin-bottom: 20px;
     }
+    :root {
+        --main-color-dark: #1e1e1e;
+        --main-color-medium: #2a2a2a;
+        --main-color-light: #555555;
+        --accent-color: #ff5555;
+        --accent-color-shadow: rgba(255, 85, 85, 0.5);
+        --text-color-bright: #fafafa;
+        --text-color-muted: #efefef;
+        --main-color-medium-hover: #2f2f2f;
+    }
     body {
         font-family: sans-serif;
         font-size: 1.2em;
         text-align: center;
         padding: 5%;
-        background-color: #1e1e1e;
-        color: #f1f1f1;
+        background-color: var(--main-color-dark);
+        color: var(--text-color-muted);
     }
     h1 {
         margin-top: 0px;
         margin-bottom: 20px;
         font-size: 3em;
-        color: #ff5555;
+        color: var(--accent-color);
     }
     p {
         margin-bottom: 5px;
@@ -33,18 +43,18 @@
         border-radius: 8px;
         cursor: pointer;
         transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
-        border: 2px solid #555555;
-        background-color: #2a2a2a;
-        color: #f1f1f1;
+        border: 2px solid var(--main-color-light);
+        background-color: var(--main-color-medium);
+        color: var(--text-color-bright);
     }
     button:hover {
-        border-color: #ff5555;
-        background-color: #2f2f2f;
+        border-color: var(--accent-color);
+        background-color: var(--main-color-medium-hover);
     }
     button:focus {
         outline: none;
-        border-color: #ff5555;
-        box-shadow: 0 0 8px rgba(255, 85, 85, 0.5);
+        border-color: var(--accent-color);
+        box-shadow: 0 0 8px var(--accent-color-shadow);
     }
     .field {
         display: flex;
@@ -63,10 +73,10 @@
         margin-bottom: 5px;
         padding: 0.5em 0.8em;
         font-size: 1.1em;
-        border: 2px solid #555555;
+        border: 2px solid var(--main-color-light);
         border-radius: 8px;
-        background-color: #2a2a2a;
-        color: #f1f1f1;
+        background-color: var(--main-color-medium);
+        color: var(--text-color-bright);
         width: 80px;
         text-align: center;
         transition: border-color 0.2s, box-shadow 0.2s;
@@ -78,12 +88,12 @@
         margin: 0;
     }
     .field input[type="number"]:hover {
-        border-color: #ff5555;
+        border-color: var(--accent-color);
     }
     .field input[type="number"]:focus {
         outline: none;
-        border-color: #ff5555;
-        box-shadow: 0 0 8px rgba(255, 85, 85, 0.5);
+        border-color: var(--accent-color);
+        box-shadow: 0 0 8px var(--accent-color-shadow);
     }
     .background {
         position:fixed;
@@ -98,40 +108,21 @@
     }
     /* Light theme (if system prefers light) */
     @media (prefers-color-scheme: light) {
-        body {
-            background-color: #f1f1f1;
-            color: #1e1e1e;
-        }
         .background {
-        background: linear-gradient(-45deg, #f2f2f2, #e7b0be, #a0d1e5, #b0e5b7);
+        background: linear-gradient(-45deg, #f7606e, #e7b0be, #a0d1e5, #b0e5b7);
         }
-        h1 {
-            color: #ff0000;
+        :root {
+        --main-color-dark: #cccccc;
+        --main-color-medium: #f0f0f0;
+        --main-color-light: #ffffff;
+        --accent-color: #ff0000;
+        --accent-color-shadow: rgba(255, 0, 0, 0.3);
+        --text-color-bright: #1e1e1e;
+        --text-color-muted: #2e2e2e;
+        --main-color-medium-hover: #f7f7f7;
         }
         button {
-            background-color: #ffffff;
-            color: #1e1e1e;
-            border: 2px solid #cccccc;
-        }
-        button:hover {
-            border-color: #ff0000;       
-            background-color: #f7f7f7;       
-        }
-        button:focus {
-            border-color: #ff0000;
-            box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
-        }
-        .field input[type="number"] {
-            background-color: #ffffff;
-            color: #1e1e1e;
-            border: 2px solid #cccccc;
-        }
-        .field input[type="number"]:hover {
-            border-color: #ff0000;
-        }
-        .field input[type="number"]:focus {
-            border-color: #ff0000;
-            box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
+            border: 2px solid var(--main-color-light);
         }
     }
 </style>
