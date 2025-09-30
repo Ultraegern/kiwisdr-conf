@@ -13,6 +13,9 @@
         --text-color-bright: #fafafa;
         --text-color-muted: #efefef;
         --main-color-medium-hover: #2f2f2f;
+        --main-shadow-background: 0 6px 18px rgba(16, 24, 40, 0.3);
+        --main-shadow-dark: 0 6px 18px rgba(16, 24, 40, 0.3);
+        --main-shadow-dark-small: 0 1px 3px rgba(16, 24, 40, 0.3);
     }
     body {
         font-family: sans-serif;
@@ -106,8 +109,61 @@
         background: linear-gradient(45deg, #5f1828, #4b2c3b, #1a3a4b, #1e4b3d);
         background-size: 150% 150%;
     }
-    /* Light theme (if system prefers light) */
-    @media (prefers-color-scheme: light) {
+    .grid{
+        display:grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap:32px;
+        max-width:1000px;
+    }
+    .card{
+        display:block;
+        text-decoration:none;
+        color:inherit;
+        border-radius: 12px;
+        overflow:hidden;
+        transform-origin:center;
+        transition:transform .28s cubic-bezier(.2,.9,.3,1), box-shadow .28s ease;
+        box-shadow:var(--main-shadow-dark-small);
+        background:var(--main-color-medium);
+        width:100%;
+    }
+    .card:focus{
+        outline:3px solid var(--accent-color);
+        outline-offset:4px;
+    }
+    .card-media{
+        height:180px;
+        background-size:cover;
+        background-position:center;
+        position:relative;
+        display:block;
+    }
+    .card-media::after{
+        content:"";
+        position:absolute;
+        inset:0;
+        background:linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.2) 60%);
+        pointer-events:none;
+    }
+    .card-title{
+        padding:18px 18px 12px 18px;
+        font-weight:700;
+        font-size:1.2rem;
+        line-height:1.2;
+        color:var(--text-color-bright);
+    }
+    .card-body{
+        padding:0 18px 18px 18px;
+        color:var(--text-color-muted);
+        font-size:0.95rem;
+        line-height:1.45;
+    }
+    .card:hover,
+    .card:focus{
+        transform: translateY(-8px) scale(1.01);
+        box-shadow:var(--main-shadow-effect);
+    }
+    @media (prefers-color-scheme: light) { /* Light theme (if system prefers light) */
         .background {
         background: linear-gradient(-45deg, #efa0ae, #d7b0be, #a0d1e5, #b0e5b7);
         }
@@ -128,5 +184,9 @@
         button:hover {
             background-color: var(--main-color-medium-hover);
         }
+    
+    }
+    @media (max-width:960px){
+      .grid{ grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
     }
 </style>

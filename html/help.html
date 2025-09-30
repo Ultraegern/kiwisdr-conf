@@ -1,146 +1,49 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Card Grid (HTML + CSS)</title>
-  <style>
-    :root{
-      --card-width: 300px;
-      --radius: 16px;
-      --bg: #ffffff;
-      --muted: #6b7280;
-      --accent: #4f46e5;
-      --shadow: 0 6px 18px rgba(16,24,40,0.08);
-    }
-
-    body{
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background: linear-gradient(180deg,#f7f7fb, #ffffff);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      min-height:100vh;
-      margin:0;
-      padding:32px;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap:32px;
-      max-width:1000px;
-    }
-
-    .card{
-      display:block;
-      text-decoration:none;
-      color:inherit;
-      border-radius:var(--radius);
-      overflow:hidden;
-      transform-origin:center;
-      transition:transform .28s cubic-bezier(.2,.9,.3,1), box-shadow .28s ease;
-      box-shadow:var(--shadow);
-      background:var(--bg);
-      width:100%;
-    }
-
-    .card:focus{
-      outline:3px solid rgba(79,70,229,0.12);
-      outline-offset:4px;
-    }
-
-    .card-media{
-      height:180px;
-      background-size:cover;
-      background-position:center;
-      position:relative;
-      display:block;
-    }
-
-    .card-media::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.2) 60%);
-      pointer-events:none;
-    }
-
-    .card-title{
-      padding:18px 18px 12px 18px;
-      font-weight:700;
-      font-size:1.05rem;
-      line-height:1.2;
-    }
-
-    .card-body{
-      padding:0 18px 18px 18px;
-      color:var(--muted);
-      font-size:0.95rem;
-      line-height:1.45;
-    }
-
-    .card:hover,
-    .card:focus{
-      transform: translateY(-8px) scale(1.01);
-      box-shadow: 0 12px 30px rgba(16,24,40,0.12);
-    }
-
-    .kicker{
-      display:inline-block;
-      font-size:0.8rem;
-      padding:6px 10px;
-      border-radius:999px;
-      background:rgba(79,70,229,0.08);
-      color:var(--accent);
-      font-weight:600;
-      margin-right:10px;
-    }
-
-    @media (max-width:960px){
-      .grid{ grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-    }
-  </style>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Card Grid (HTML + CSS)</title>
+	<link rel="stylesheet" href="stylesheet.css" />
 </head>
 <body>
-    
-  <div class="grid">
-    <a class="card" href="#" aria-label="Card 1">
-      <div class="card-media" style="background-image:url('https://picsum.photos/id/1015/600/400');"></div>
-      <div class="card-title"><span class="kicker">1</span>Mountain Adventure</div>
-      <div class="card-body">Explore the peaks and valleys in this scenic mountain getaway.</div>
-    </a>
+	<div class="background"></div>
+	<div class="grid">
+		<a class="card" href="#" aria-label="Card 1">
+			<div class="card-media" style="background-image:url('https://picsum.photos/id/1015/600/400');"></div>
+			<div class="card-title">Mountain Adventure</div>
+			<div class="card-body">Explore the peaks and valleys in this scenic mountain getaway.</div>
+		</a>
 
-    <a class="card" href="#" aria-label="Card 2">
-      <div class="card-media" style="background-image:url('https://picsum.photos/id/1016/600/400');"></div>
-      <div class="card-title"><span class="kicker">2</span>Ocean Retreat</div>
-      <div class="card-body">Relax by the blue ocean waves and enjoy the fresh sea breeze.</div>
-    </a>
+		<a class="card" href="#" aria-label="Card 2">
+			<div class="card-media" style="background-image:url('https://picsum.photos/id/1016/600/400');"></div>
+			<div class="card-title">Ocean Retreat</div>
+			<div class="card-body">Relax by the blue ocean waves and enjoy the fresh sea breeze.</div>
+		</a>
 
-    <a class="card" href="#" aria-label="Card 3">
-      <div class="card-media" style="background-image:url('https://picsum.photos/id/1018/600/400');"></div>
-      <div class="card-title"><span class="kicker">3</span>City Lights</div>
-      <div class="card-body">Experience vibrant nightlife and cultural hotspots of the city.</div>
-    </a>
+		<a class="card" href="#" aria-label="Card 3">
+			<div class="card-media" style="background-image:url('https://picsum.photos/id/1018/600/400');"></div>
+			<div class="card-title">City Lights</div>
+			<div class="card-body">Experience vibrant nightlife and cultural hotspots of the city.</div>
+		</a>
 
-    <a class="card" href="#" aria-label="Card 4">
-      <div class="card-media" style="background-image:url('https://picsum.photos/id/1020/600/400');"></div>
-      <div class="card-title"><span class="kicker">4</span>Desert Journey</div>
-      <div class="card-body">Embark on a serene desert adventure with sweeping dunes.</div>
-    </a>
+		<a class="card" href="#" aria-label="Card 4">
+			<div class="card-media" style="background-image:url('https://picsum.photos/id/1020/600/400');"></div>
+			<div class="card-title">Desert Journey</div>
+			<div class="card-body">Embark on a serene desert adventure with sweeping dunes.</div>
+		</a>
 
-    <a class="card" href="#" aria-label="Card 5">
-      <div class="card-media" style="background-image:url('https://picsum.photos/id/1024/600/400');"></div>
-      <div class="card-title"><span class="kicker">5</span>Forest Escape</div>
-      <div class="card-body">Unwind in lush green forests and reconnect with nature.</div>
-    </a>
+		<a class="card" href="#" aria-label="Card 5">
+			<div class="card-media" style="background-image:url('https://picsum.photos/id/1024/600/400');"></div>
+			<div class="card-title">Forest Escape</div>
+			<div class="card-body">Unwind in lush green forests and reconnect with nature.</div>
+		</a>
 
-    <a class="card" href="#" aria-label="Card 6">
-      <div class="card-media" style="background-image:url('https://picsum.photos/id/1025/600/400');"></div>
-      <div class="card-title"><span class="kicker">6</span>Snowy Peaks</div>
-      <div class="card-body">Ski down snowy slopes or cozy up by the fireplace with cocoa.</div>
-    </a>
-  </div>
-
+		<a class="card" href="#" aria-label="Card 6">
+			<div class="card-media" style="background-image:url('https://picsum.photos/id/1025/600/400');"></div>
+			<div class="card-title">Snowy Peaks</div>
+			<div class="card-body">Ski down snowy slopes or cozy up by the fireplace with cocoa.</div>
+		</a>
+	</div>
 </body>
 </html>
