@@ -55,8 +55,8 @@
     }
     .field-group {
         display: flex;
-        flex-direction: column;     /* stack all label-groups */
-        align-items: center;              /* optional: fix width for alignment */
+        flex-direction: column;
+        align-items: center;
         margin-bottom: 15px;
     }
     .field input[type="number"] {
@@ -67,7 +67,7 @@
         border-radius: 8px;
         background-color: #2a2a2a;
         color: #f1f1f1;
-        width: 150px;
+        width: 80px;
         text-align: center;
         transition: border-color 0.2s, box-shadow 0.2s;
         -moz-appearance: textfield; /* Remove spinners in Firefox */
