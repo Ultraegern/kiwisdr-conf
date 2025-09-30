@@ -12,16 +12,8 @@
   <p>Use this interface to start and stop recordings on the KiwiSDR.</p>
   <div class="field-group">
     <label class="field">
-      <span>Frequency (kHz):</span>
-      <input type="number" id="frequency" value="15000" min="3000" max="30000">
-    </label>
-    <label class="field">
-      <span>Bandwidth (Hz):</span>
-      <input type="number" id="bandwidth" value="3000" min="100" max="32000">
-    </label>
-    <label class="field">
-      <span>Duration (sec):</span>
-      <input type="number" id="duration" value="60" min="1">
+      <span>Duration (sec) ("0" for infinite):</span>
+      <input type="number" id="duration" value="0" min="0" step="1">
     </label>
   </div>
 
@@ -35,20 +27,18 @@
     const statusDiv = document.getElementById('status');
 
     async function startRecording() {
-      const frequency = document.getElementById('frequency').value;
-      const bandwidth = document.getElementById('bandwidth').value;
       const duration = document.getElementById('duration').value;
 
       statusDiv.innerText = 'Starting recording...';
 
       try {
-        const res = await fetch('/api/recorder/start', {
+        const responseRaw = await fetch('/api/recorder/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ frequency, bandwidth, duration })
+          body: JSON.stringify({ duration })
         });
-        const data = await res.json();
-        statusDiv.innerText = data.message;
+        const response = await responseRaw.json();
+        statusDiv.innerText = response.message;
       } catch (e) {
         statusDiv.innerText = 'Error: ' + e;
       }
@@ -57,9 +47,9 @@
     async function stopRecording() {
       statusDiv.innerText = 'Stopping recording...';
       try {
-        const res = await fetch('/api/recorder/stop', { method: 'POST' });
-        const data = await res.json();
-        statusDiv.innerText = data.message;
+        const responseRaw = await fetch('/api/recorder/stop', { method: 'POST' });
+        const response = await responseRaw.json();
+        statusDiv.innerText = response.message;
       } catch (e) {
         statusDiv.innerText = 'Error: ' + e;
       }
