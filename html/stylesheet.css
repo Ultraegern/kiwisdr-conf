@@ -103,13 +103,13 @@
         bottom:0;
         z-index:-1;
         
-        background: linear-gradient(45deg, #2e2e2e, #4b2c3b, #1a3a4b, #1e4b3d);
+        background: linear-gradient(45deg, #5f1828, #4b2c3b, #1a3a4b, #1e4b3d);
         background-size: 150% 150%;
     }
     /* Light theme (if system prefers light) */
     @media (prefers-color-scheme: light) {
         .background {
-        background: linear-gradient(-45deg, #f7606e, #e7b0be, #a0d1e5, #b0e5b7);
+        background: linear-gradient(-45deg, #f7909e, #e7b0be, #a0d1e5, #b0e5b7);
         }
         :root {
         --main-color-dark: #cccccc;
