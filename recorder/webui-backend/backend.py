@@ -19,12 +19,16 @@ def start_recording() -> tuple[Dict[str, str], int] | Dict[str, str]:
         bandwidth: str = str(data.get('bandwidth'))
         duration: str = str(data.get('duration'))
 
-        # Build the command line arguments for kiwiclient
+        # python3 kiwirecorder.py -s <kiwi_host> -p <port> -m iq --kiwi-wav --station <station_name> -d <dir>
         cmd: list[str] = [
-            'kiwiclient',  # Replace with the actual command
-            '--frequency', frequency,
-            '--bandwidth', bandwidth,
-            '--duration', duration
+            'python3',  # Replace with the actual command
+            'kiwirecorder.py',
+            '-s', '127.0.0.1',
+            '-p', "8073",
+            '-m', 'iq',
+            '--kiwi-wav',
+            '--station', '""',
+            '-d', '/var/recorder/recorded-files/',
         ]
 
         # Start the recording process
@@ -46,6 +50,9 @@ def stop_recording() -> tuple[Dict[str, str], int] | Dict[str, str]:
             return {"message": "No recording is running."}, 400
     except Exception as e:
         return {"message": f"Error stopping recording: {e}"}, 500
+    finally:
+        rebuild_file_index_list()
+    
 
 RECORDINGS_DIR = Path("/var/recorder/recorded-files/")
 LIST_FILE = RECORDINGS_DIR / "list.json"
