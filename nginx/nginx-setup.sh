@@ -34,7 +34,7 @@ fi
 # Generate self-signed TLS certificate
 echo "⬜ Generating self-signed TLS certificate"
 
-verify_signature $DIR/cert/renew-cert.sh && sudo chmod +x $DIR/cert/renwew-cert.sh && sudo $DIR/cert/renew-cert.sh
+verify_signature $DIR/cert/renew-cert.sh && sudo chmod +x $DIR/cert/renew-cert.sh && sudo $DIR/cert/renew-cert.sh
 
 echo "✅ Self-signed TLS certificate created at /etc/ssl/kiwisdr"
 
