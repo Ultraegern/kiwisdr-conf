@@ -21,6 +21,7 @@ fi
 
 echo "⬜ Setting up api backend service..."
 verify_signature $DIR/recorder/webui-backend/backend.py && sudo chmod +x $DIR/recorder/webui-backend/backend.py && sudo cp $DIR/recorder/webui-backend/backend.py /usr/local/bin/recorder-backend.py
+sudo mkdir -p /var/recorder/recorded-files/gnss_pos/
 
 echo "⬜ Setting up systemd service..."
 verify_signature $DIR/recorder/webui-backend/backend.service && sudo cp $DIR/recorder/webui-backend/backend.service /etc/systemd/system/recorder-backend.service
