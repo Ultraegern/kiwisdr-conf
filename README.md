@@ -43,3 +43,5 @@ gpg --verify setup.sh.asc setup.sh 2>/dev/null && \
 sudo chmod +x setup.sh && \
 sudo ./setup.sh
 ```
+
+Now you can go to [https://kiwisdr.local/help](https://kiwisdr.local/help)
