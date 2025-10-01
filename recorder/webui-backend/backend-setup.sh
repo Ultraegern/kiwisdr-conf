@@ -15,7 +15,7 @@ else
     sudo apt install -y -qq python3 python3-pip
     echo "✅ Python3 installed successfully: $(python3 --version)"
     echo "⬜ Installing Flask..."
-    pip3 install Flask
+    pip3 install --only-binary=:all: Flask markupsafe
     echo "✅ Flask installed successfully: $(python3 -c 'import flask; print(flask.__version__)')"
 fi
 
