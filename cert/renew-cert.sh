@@ -17,7 +17,7 @@ fi
 # Generate new cert
 openssl req -x509 -nodes -days 90 \
   -subj "/C=DK/ST=Aarhus/L=Skyby/O=SkyTEM Surveys ApS/OU=SkyTEM Surveys ApS/CN=kiwisdr.local" \
-  -newkey rsa:2048 \
+  -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
   -keyout "$SSL_DIR/kiwisdr.key" \
   -out "$SSL_DIR/kiwisdr.crt"
 
