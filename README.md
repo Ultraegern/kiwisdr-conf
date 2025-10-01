@@ -1,6 +1,27 @@
 Installation Instructions
 ==============
 
+### Change password and connect with `ssh`:
+Go to [http://kiwisdr.local:8073/admin](http://kiwisdr.local:8073/admin)  (Note: `http`, not `https`)  
+Go to the `Security` tab  
+Edit `Admin password`  
+Go to the `Console` tab  
+Press the `Connect` button
+
+Chage the password of the root user:
+```bash
+passwd root
+```
+Chage the password of the debian user:
+```bash
+passwd debian
+```
+Now you can `ssh` into the Kiwi (from a terminal on you laptop, not the Kiwi web console)
+```shell
+ssh root@kiwisdr.local
+```
+
+### Add key
 Start by adding public.key to your keyring:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Ultraegern/kiwisdr-conf/refs/heads/main/public.key | gpg --import
