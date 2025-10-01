@@ -3,6 +3,9 @@ set -euo pipefail
 SSL_DIR="/etc/ssl/kiwisdr"
 TS=$(date +%F-%H%M%S)
 
+# Create SSL directory if it doesn't exist
+mkdir -p "$SSL_DIR"
+
 # Backup old cert/key if they exist
 if [[ -f "$SSL_DIR/kiwisdr.crt" ]]; then
   mv "$SSL_DIR/kiwisdr.crt" "$SSL_DIR/kiwisdr.crt.$TS"
