@@ -4,8 +4,11 @@ from typing import Optional, Dict, Any
 import os
 import json
 from pathlib import Path
+from datetime import datetime
 
 app: Flask = Flask(__name__)
+
+recording_nr: int = 0
 
 # You can store the process here to stop it later
 recording_process: Optional[subprocess.Popen] = None
@@ -17,20 +20,22 @@ def start_recording() -> tuple[Dict[str, str], int] | Dict[str, str]:
         data: dict[str, Any] = request.get_json()  # type: ignore
         duration: str = str(data.get('duration'))
         autostop: bool = not (duration == "0")
-        # python3 kiwirecorder.py -s <kiwi_host> -p <port> -m iq --kiwi-wav --station <station_name> -d <dir>
+        # python3 kiwirecorder.py -s <kiwi_host> -p <port> -m iq --kiwi-wav -d <dir> --filename <filename> --station <filename nr 2>
         cmd: list[str] = [
-            'python3',  # Replace with the actual command
-            'kiwirecorder.py',
+            'cd', '/usr/local/bin/recorder', '&&',
+            'python3', 'kiwirecorder.py',
             '-s', '127.0.0.1',
             '-p', "8073",
             '-m', 'iq',
             '--kiwi-wav',
-            '--station', '""',
             '-d', '/var/recorder/recorded-files/',
+            '--filename', str(datetime.now().strftime("%Y-%m-%d_%H-%M-%S")),
+            '--station', str(recording_nr).zfill(4)
         ]
 
         # Start the recording process
         recording_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        recording_nr = (recording_nr + 1) % 10000  # Wrap around after 9999
         if autostop:
             # If autostop is enabled, wait for the specified duration and then stop the recording
             recording_process.wait(timeout=int(duration))
