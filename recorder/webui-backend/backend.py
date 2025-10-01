@@ -10,6 +10,10 @@ app: Flask = Flask(__name__)
 
 recording_nr: int = 0
 
+@app.route('/api', methods=['GET'])
+def is_alive() -> Dict[str, str]:
+    return {"message": "API is online"}
+
 # You can store the process here to stop it later
 recording_process: Optional[subprocess.Popen] = None
 
