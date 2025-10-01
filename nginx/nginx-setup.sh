@@ -63,6 +63,7 @@ echo "⬜ Configuring web files"
 verify_signature $DIR/html/stylesheet.css && sudo cp $DIR/html/stylesheet.css /var/www/html/stylesheet.css
 verify_signature $DIR/html/502.html && sudo cp $DIR/html/502.html /var/www/html/502.html
 verify_signature $DIR/html/recorder.html && sudo cp $DIR/html/recorder.html /var/www/html/recorder.html
+verify_signature $DIR/html/help.html && sudo cp $DIR/html/help.html /var/www/html/help.html
 verify_signature $DIR/html/filebrowser.html && sudo cp $DIR/html/filebrowser.html /var/www/html/filebrowser.html
 echo "✅ Web files are configured."
 
