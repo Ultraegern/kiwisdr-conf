@@ -75,7 +75,7 @@ verify_signature $DIR/nginx/nginx.conf && sudo cp $DIR/nginx/nginx.conf /etc/ngi
 sudo ln -sf /etc/nginx/sites-available/kiwisdr /etc/nginx/sites-enabled/kiwisdr
 
 # Test configuration and reload Nginx
-sudo nginx -t > /dev/null 2>&1
+sudo nginx -t > /dev/null
 sudo systemctl reload nginx
 
 echo "✅ Nginx is configured. Access KiwiSDR at https://kiwisdr.local"
