@@ -1,6 +1,7 @@
+# Python 3.9
 from flask import Flask, request, jsonify
 import subprocess
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 import os
 import json
 from pathlib import Path
@@ -18,7 +19,7 @@ def is_alive() -> Dict[str, str]:
 recording_process: Optional[subprocess.Popen] = None
 
 @app.route('/api/recorder/start', methods=['POST'])
-def start_recording() -> tuple[Dict[str, str], int] | Dict[str, str]:
+def start_recording() -> Union[tuple[Dict[str, str], int], Dict[str, str]]:
     global recording_process
     try:
         data: dict[str, Any] = request.get_json()  # type: ignore
@@ -53,7 +54,7 @@ def start_recording() -> tuple[Dict[str, str], int] | Dict[str, str]:
         return {"message": f"Error starting recording: {e}"}, 500
 
 @app.route('/api/recorder/stop', methods=['POST'])
-def stop_recording() -> tuple[Dict[str, str], int] | Dict[str, str]:
+def stop_recording() -> Union[tuple[Dict[str, str], int], Dict[str, str]]:
     global recording_process
     try:
         if recording_process:
