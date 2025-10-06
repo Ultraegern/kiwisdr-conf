@@ -20,7 +20,7 @@ recording_process: Optional[subprocess.Popen] = None
 
 @app.route('/api/recorder/start', methods=['POST'])
 def start_recording() -> Union[tuple[Dict[str, str], int], Dict[str, str]]:
-    global recording_process
+    global recording_process, recording_nr
     try:
         data: dict[str, Any] = request.get_json()  # type: ignore
         duration: str = str(data.get('duration'))
