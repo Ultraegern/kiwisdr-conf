@@ -8,8 +8,6 @@ verify_signature() {
   local file="$1"
   local file_asc="${file}.asc"
 
-  echo "⬜ Verifying the signature of $file..."
-
   local gpg_output=$(gpg --verify --keyring=- --fingerprint "$file_asc" "$file" 2>&1)
   # Check the verification result. This is a basic check;
   # more robust checks might involve parsing the output of gpg --verify and
@@ -33,6 +31,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   verify_signature recorder/webui-backend/backend-setup.sh && sudo chmod +x recorder/webui-backend/backend-setup.sh && sudo ./recorder/webui-backend/backend-setup.sh
 
   sudo rm -R /tmp/kiwisdr-conf-main
+
+  echo "✅ The KiwiSDR configuration is complete."
+  echo "ℹ️ The KiwiSDR wil now reboot."
+  sudo reboot
 fi
 
 
