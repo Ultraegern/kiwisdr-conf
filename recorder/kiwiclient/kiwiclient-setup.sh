@@ -3,15 +3,9 @@
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-# Function to check if a command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-
-# Install kiwirecorder if not installed
-if command_exists kiwirecorder; then
-    echo "✅ kiwirecorder is already installed"
+# Install KiwiRecorder if not installed
+if [ -e /usr/local/src/kiwiclient/kiwirecorder.py ]; then
+    echo "✅ KiwiRecorder is already installed"
 else
     echo "⬜ Refreshing package lists..."
     sudo apt update -qq
@@ -28,9 +22,5 @@ else
     echo "⬜ Building libsamplerate wrapper..."
     make samplerate_build
 
-    echo "⬜ Creating symlink for convenience..."
-    sudo ln -sf /usr/local/src/kiwiclient/kiwirecorder.py /usr/local/bin/kiwirecorder
-    sudo chmod +x /usr/local/bin/kiwirecorder
-
-    echo "✅ kiwirecorder installed successfully"
+    echo "✅ KiwiRecorder installed successfully"
 fi
