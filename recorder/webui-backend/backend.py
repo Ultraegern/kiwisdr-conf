@@ -26,11 +26,10 @@ def start_recording() -> Union[tuple[Dict[str, str], int], Dict[str, str]]:
         duration: str = str(data.get('duration'))
         autostop: bool = not (duration == "0")
         # python3 kiwirecorder.py -s <kiwi_host> -p <port> -m iq --kiwi-wav -d <dir> --filename <filename> --station <filename nr 2>
-        cmd: list[str] = [
-            'cd', '/usr/local/bin/recorder', '&&',
+        cmd = [
             'python3', 'kiwirecorder.py',
             '-s', '127.0.0.1',
-            '-p', "8073",
+            '-p', '8073',
             '-m', 'iq',
             '--kiwi-wav',
             '-d', '/var/recorder/recorded-files/',
@@ -38,8 +37,13 @@ def start_recording() -> Union[tuple[Dict[str, str], int], Dict[str, str]]:
             '--station', str(recording_nr).zfill(4)
         ]
 
-        # Start the recording process
-        recording_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        recording_process = subprocess.Popen(
+            cmd,
+            cwd='/usr/local/bin/recorder',
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+
         recording_nr = (recording_nr + 1) % 10000  # Wrap around after 9999
         if autostop:
             # If autostop is enabled, wait for the specified duration and then stop the recording
