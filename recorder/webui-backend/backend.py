@@ -39,7 +39,7 @@ def start_recording() -> Union[Tuple[Dict[str, str], int], Dict[str, str]]:
 
         recording_process = subprocess.Popen(
             cmd,
-            cwd='/usr/local/bin/recorder',
+            cwd='/usr/local/src/kiwiclient/',
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
