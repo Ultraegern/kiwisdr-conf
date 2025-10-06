@@ -1,5 +1,10 @@
-Installation Instructions
-==============
+# Overview
+This repo installs and configues:
+* Nginx as a TLS endpoint, webserver for static files, and a proxy for everything else
+* KiwiClient as a tool for recording from the Kiwi
+* Python 3.9 + Flask as a webserver for exposing KiwiClient as a REST api 
+
+# Installation Instructions
 
 ### Change password and connect with `ssh`:
 Go to [http://kiwisdr.local:8073/admin](http://kiwisdr.local:8073/admin)  (Note: `http`, not `https`)  
