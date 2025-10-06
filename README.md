@@ -51,3 +51,4 @@ sudo ./setup.sh
 ```
 
 Now you can go to [https://kiwisdr.local/help](https://kiwisdr.local/help)
+> ℹ️ **Note:** The TLS cert is Self-Signed, so your browser may complain. That is normal.
