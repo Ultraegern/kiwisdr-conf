@@ -1,10 +1,9 @@
 <style>
-    /* Dark theme colors and Spacing */
     .fake-class { /* Apparently the first item isn't applied */
         margin-top: 20px;
         margin-bottom: 20px;
     }
-    :root {
+    :root { /* Dark theme colors */
         --main-color-dark: #1e1e1e;
         --main-color-medium: #2a2a2a;
         --main-color-light: #555555;
