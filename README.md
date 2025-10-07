@@ -23,7 +23,11 @@ passwd debian
 ```
 Now you can `ssh` into the Kiwi (from a terminal on you laptop, not the Kiwi web console)
 ```shell
-ssh root@kiwisdr.local
+ssh debian@kiwisdr.local
+```
+Swith user
+```bash
+su
 ```
 
 ### Add key
