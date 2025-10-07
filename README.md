@@ -3,6 +3,9 @@ This repo installs and configues:
 * Nginx as a TLS endpoint, webserver for static files, and a proxy for everything else
 * KiwiClient as a tool for recording from the Kiwi
 * Python 3.9 + Flask as a webserver for exposing KiwiClient as a REST api 
+### Compatability
+This repo is known to work with
+* KiwiSDR 1 + BeagleBone Green + [This firmware](http://kiwisdr.com/files/KiwiSDR_v1.804_BBG_BBB_Debian_11.11.img.xz) SHA256: `2f60798f60b647f0b18f8ac7493776c7b75f22f17977dffdd6c8253274538c3f`
 
 # Installation Instructions
 
