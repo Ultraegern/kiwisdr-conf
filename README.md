@@ -11,7 +11,8 @@ This repo is known to work with
 # Installation Instructions
 
 ### Change password and connect with `ssh`:
-Go to [http://kiwisdr.local:8073/admin](http://kiwisdr.local:8073/admin)  (Note: `http`, not `https`)  
+Go to the KiwiSDR Admin Panel
+[http://kiwisdr.local:8073/admin](http://kiwisdr.local:8073/admin)  (Note: `http`, not `https`)  
 Go to the `Security` tab  
 Edit `Admin password`  
 Go to the `Console` tab  
@@ -29,7 +30,7 @@ Now you can `ssh` into the Kiwi (from a terminal on you laptop, not the Kiwi web
 ```shell
 ssh debian@kiwisdr.local
 ```
-Swith user
+Switch user
 ```bash
 su
 ```
@@ -60,3 +61,13 @@ sudo ./setup.sh
 
 Now you can go to [https://kiwisdr.local/help](https://kiwisdr.local/help)
 > ℹ️ **Note:** The TLS cert is Self-Signed, so your browser may complain. That is normal.
+
+### Customise
+Go to the KiwiSDR Admin Panel
+[https://kiwisdr.local/admin](https://kiwisdr.local/admin)
+Go to the `Webpage` tab  
+Top bar title: `KiwiSDR by SkyTEM Surveys ApS`  
+Owner info: [Copy this file](https://github.com/Ultraegern/kiwisdr-conf/blob/main/skytem-logo.html)  
+Grid square: Continuous update from GPS: `true`  
+Location: Continuous update from GPS: `Hi Res`  
+Admin email: `it@skytem.com`  
