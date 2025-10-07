@@ -24,6 +24,10 @@
         padding: 5%;
         background-color: var(--main-color-dark);
         color: var(--text-color-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
     }
     h1 {
         margin-top: 0px;
