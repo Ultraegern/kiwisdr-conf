@@ -1,7 +1,7 @@
 # Python 3.9
 from flask import Flask, request, jsonify
 import subprocess
-from typing import Optional, Dict, Any, Union, Tuple
+from typing import Optional, Dict, Any
 import os
 import json
 from pathlib import Path
@@ -19,7 +19,7 @@ def is_alive() -> Dict[str, str]:
 recording_process: Optional[subprocess.Popen] = None
 
 @app.route('/api/recorder/start', methods=['POST'])
-def start_recording() -> Union[Tuple[Dict[str, str], int], Dict[str, str]]:
+def start_recording() -> Any: #Union[Tuple[Dict[str, str], int], Dict[str, str]]:
     global recording_process, recording_nr
     try:
         data: dict[str, Any] = request.get_json()  # type: ignore
@@ -33,8 +33,8 @@ def start_recording() -> Union[Tuple[Dict[str, str], int], Dict[str, str]]:
             '-m', 'iq',
             '--kiwi-wav',
             '-d', '/var/recorder/recorded-files/',
-            '--filename', str(datetime.now().strftime("%Y-%m-%d_%H-%M-%S")),
-            '--station', str(recording_nr).zfill(4)
+            '--filename', str(recording_nr).zfill(4),
+            '--station', str(datetime.now().strftime("%Y-%m-%d_%H-%M-%S")) 
         ]
 
         recording_process = subprocess.Popen(
@@ -58,7 +58,7 @@ def start_recording() -> Union[Tuple[Dict[str, str], int], Dict[str, str]]:
         return {"message": f"Error starting recording: {e}"}, 500
 
 @app.route('/api/recorder/stop', methods=['POST'])
-def stop_recording() -> Union[Tuple[Dict[str, str], int], Dict[str, str]]:
+def stop_recording() -> Any: #Union[Tuple[Dict[str, str], int], Dict[str, str]]:
     global recording_process
     try:
         if recording_process:
