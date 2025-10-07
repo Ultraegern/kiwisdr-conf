@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 from datetime import datetime
 
+TRUSTED_PROXY_IP = '127.0.0.1' # Trust X-Real-Ip headers from nginx proxy
+
 app: Flask = Flask(__name__)
 
 recording_nr: int = 0
@@ -87,6 +89,18 @@ def rebuild_file_index_list() -> None:
 
     LIST_FILE.write_text(json.dumps(files, indent=2))
 
+class RealIPMiddleware:
+    def __init__(self, app, trusted_proxy_ip):
+        self.app = app
+        self.trusted_proxy_ip = trusted_proxy_ip
+
+    def __call__(self, environ, start_response):
+        remote_addr = environ.get('REMOTE_ADDR')
+        if remote_addr == self.trusted_proxy_ip:
+            real_ip = environ.get('HTTP_X_REAL_IP')
+            if real_ip:
+                environ['REMOTE_ADDR'] = real_ip
+        return self.app(environ, start_response)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
