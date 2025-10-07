@@ -63,8 +63,7 @@ Now you can go to [https://kiwisdr.local/help](https://kiwisdr.local/help)
 > ℹ️ **Note:** The TLS cert is Self-Signed, so your browser may complain. That is normal.
 
 ### Customise
-Go to the KiwiSDR Admin Panel
-[https://kiwisdr.local/admin](https://kiwisdr.local/admin)
+Go to the [Admin Panel](https://kiwisdr.local/admin)  
 Go to the `Webpage` tab  
 Top bar title: `KiwiSDR by SkyTEM Surveys ApS`  
 Owner info: [Copy this file](https://github.com/Ultraegern/kiwisdr-conf/blob/main/skytem-logo.html)  
