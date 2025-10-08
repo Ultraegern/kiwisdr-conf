@@ -16,7 +16,7 @@ else
     echo "✅ Python3 installed successfully: $(python3 --version)"
     echo "⬜ Installing Flask..."
     pip3 install --only-binary=:all: Flask markupsafe
-    echo "✅ Flask installed successfully: $(python3 -c 'import flask; print(flask.__version__)')"
+    echo "✅ Flask installed successfully: $(python3 -c 'import importlib.metadata; print(importlib.metadata.version("flask")')"
 fi
 
 echo "⬜ Setting up api backend service..."
