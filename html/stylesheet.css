@@ -24,7 +24,6 @@
         background-color: var(--main-color-dark);
         color: var(--text-color-muted);
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
         min-height: 100vh;
