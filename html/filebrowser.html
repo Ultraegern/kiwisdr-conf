@@ -11,57 +11,62 @@
 	<h1>KiwiFiles</h1>
 	<p>Browse and download your recordings below:</p>
 
-	<div class="grid" id="file-grid"></div>
+	<div class="table-container">
+		<table id="file-table">
+			<thead>
+				<tr>
+					<th>Filename</th>
+					<th>Date & Time</th>
+					<th>Size</th>
+					<th>Download</th>
+				</tr>
+			</thead>
+			<tbody>
+			<!-- JS will inject rows here -->
+			</tbody>
+		</table>
+		</div>
 
 	<script>
 		const DOWNLOAD_URL = '/recorder/download/';
 
 		async function fetchFileList() {
-			try {
-				const res = await fetch(DOWNLOAD_URL);
-				const text = await res.text();
-				const parser = new DOMParser();
-				const doc = parser.parseFromString(text, 'text/html');
-				
-				const links = [...doc.querySelectorAll('a')]
-					.filter(a => a.getAttribute('href') && !a.getAttribute('href').startsWith('?') && a.getAttribute('href') !== '../');
+		try {
+			const res = await fetch(DOWNLOAD_URL);
+			const text = await res.text();
+			const doc = new DOMParser().parseFromString(text, 'text/html');
 
-				const grid = document.getElementById('file-grid');
-
-				if (!links.length) {
-					grid.innerHTML = "<p>No recordings found.</p>";
-					return;
-				}
-
-				links.forEach(link => {
-					const fileName = link.textContent.trim();
-					const fileUrl = DOWNLOAD_URL + encodeURIComponent(fileName);
-
-					const card = document.createElement('a');
-					card.className = 'card';
-					card.href = fileUrl;
-					card.target = '_blank';
-
-					const cardMedia = document.createElement('div');
-					cardMedia.className = 'card-media';
-					cardMedia.style.backgroundImage = 'url(/media/kiwisdr.png)';
-
-					const cardTitle = document.createElement('div');
-					cardTitle.className = 'card-title';
-					cardTitle.textContent = fileName;
-
-					const cardBody = document.createElement('div');
-					cardBody.className = 'card-body';
-					cardBody.textContent = 'Click to download';
-
-					card.appendChild(cardMedia);
-					card.appendChild(cardTitle);
-					card.appendChild(cardBody);
-					grid.appendChild(card);
-				});
-			} catch (err) {
-				document.getElementById('file-grid').innerHTML = `<p>Error loading files: ${err.message}</p>`;
+			const pre = doc.querySelector('pre');
+			if (!pre) {
+				document.getElementById('file-table').innerHTML = "<tr><td colspan='4'>No files found.</td></tr>";
+				return;
 			}
+
+			const lines = pre.innerText.split('\n').slice(3); // Skip header rows
+
+			const tbody = document.querySelector('#file-table tbody');
+			lines.forEach(line => {
+			// Match line with filename, date, time, size (from NGINX autoindex format)
+			const match = line.match(/(\S+)\s+(\d{2}-\w{3}-\d{4})\s+(\d{2}:\d{2})\s+([\d.]+\w?)/);
+			if (!match) return;
+
+			const [_, name, date, time, size] = match;
+			const tr = document.createElement('tr');
+
+			tr.innerHTML = `
+				<td>${name}</td>
+				<td>${date.replace(/-/g, '/') + ' ' + time}</td>
+				<td>${size}</td>
+				<td><a href="${DOWNLOAD_URL + encodeURIComponent(name)}" target="_blank"><button>Download</button></a></td>
+			`;
+
+			tbody.appendChild(tr);
+			});
+
+		} catch (err) {
+			console.error('Error loading file list:', err);
+			document.querySelector('#file-table tbody').innerHTML = `<tr><td colspan="4">Error: ${err.message}</td></tr>`;
+		}
 		}
 
 		fetchFileList();

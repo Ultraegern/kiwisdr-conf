@@ -164,6 +164,43 @@ button:focus {
     box-shadow:var(--main-shadow-effect);
     outline:3px solid var(--accent-color);
 }
+.table-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+table {
+  border-collapse: collapse;
+  width: 90%;
+  max-width: 900px;
+  background-color: var(--main-color-medium);
+  color: var(--text-color-bright);
+  box-shadow: var(--main-shadow-dark-small);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--main-color-light);
+}
+
+th {
+  background-color: var(--main-color-dark);
+  font-weight: 600;
+}
+
+tr:hover {
+  background-color: var(--main-color-medium-hover);
+}
+
+a button {
+  margin: 0;
+  font-size: 0.9em;
+  padding: 0.4em 0.8em;
+}
 @media (prefers-color-scheme: light) { /* Light theme (if system prefers light) */
     .background {
     background: linear-gradient(-45deg, #efa0ae, #d7b0be, #a0d1e5, #b0e5b7);
