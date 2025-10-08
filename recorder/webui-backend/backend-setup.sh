@@ -8,7 +8,7 @@ DIR=/tmp/kiwisdr-conf-main
 
 # Install Python and Flask if not installed
 if command -v python3 &>/dev/null && python3 -c "import flask" &>/dev/null; then
-    echo "✅ Python3 and Flask are already installed: $(python3 --version), Flask $(python3 -c 'import flask; print(flask.__version__)')"
+    echo "✅ Python3 and Flask are already installed: $(python3 --version), Flask $(python3 -c 'import importlib.metadata; print(importlib.metadata.version("flask"))')"
 else
     echo "⬜ Installing Python3... (this may take a while)"
     sudo apt update -qq
