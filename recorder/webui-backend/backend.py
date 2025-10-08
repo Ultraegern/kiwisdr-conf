@@ -33,8 +33,8 @@ def start_recording() -> Any: #Union[Tuple[Dict[str, str], int], Dict[str, str]]
             '-m', 'iq',
             '--kiwi-wav',
             '-d', '/var/recorder/recorded-files/',
-            '--filename', str(recording_nr).zfill(4),
-            '--station', str(datetime.now().strftime("%Y-%m-%d_%H-%M-%S")) 
+            '--filename', "KiwiRecording",
+            '--station', str(recording_nr).zfill(4) 
         ]
 
         recording_process = subprocess.Popen(
