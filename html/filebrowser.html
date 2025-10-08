@@ -42,22 +42,44 @@
 				return;
 			}
 
-			const lines = pre.innerText.split('\n').slice(3); // Skip header rows
+			const lines = pre.innerText.split('\n').slice(3); // Skip header lines
 
-			const tbody = document.querySelector('#file-table tbody');
+			const files = [];
+
 			lines.forEach(line => {
-			// Match line with filename, date, time, size (from NGINX autoindex format)
-			const match = line.match(/(\S+)\s+(\d{2}-\w{3}-\d{4})\s+(\d{2}:\d{2})\s+([\d.]+\w?)/);
+			// Match lines like: file123.wav  15-Oct-2025 13:50  100M
+			const match = line.match(/(\S+)\s+(\d{2})-(\w{3})-(\d{4})\s+(\d{2}):(\d{2})\s+([\d.]+\w?)/);
 			if (!match) return;
 
-			const [_, name, date, time, size] = match;
+			const [_, name, day, monthStr, year, hour, minute, size] = match;
+
+			const monthMap = {
+				Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+				Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+			};
+
+			const month = monthMap[monthStr];
+			const fileDate = new Date(year, month, day, hour, minute);
+
+			files.push({ name, size, date: fileDate });
+			});
+
+			// Sort by date descending (newest first)
+			files.sort((a, b) => b.date - a.date);
+
+			// Populate the table
+			const tbody = document.querySelector('#file-table tbody');
+			files.forEach(file => {
 			const tr = document.createElement('tr');
+			const pad = n => n.toString().padStart(2, '0');
+			const d = file.date;
+			const formattedDate = `${pad(d.getHours())}:${pad(d.getMinutes())} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
 
 			tr.innerHTML = `
-				<td>${name}</td>
-				<td>${date.replace(/-/g, '/') + ' ' + time}</td>
-				<td>${size}</td>
-				<td><a href="${DOWNLOAD_URL + encodeURIComponent(name)}" target="_blank"><button>Download</button></a></td>
+				<td>${file.name}</td>
+				<td>${formattedDate}</td>
+				<td>${file.size}B</td>
+				<td><a href="${DOWNLOAD_URL + encodeURIComponent(file.name)}" target="_blank"><button>Download</button></a></td>
 			`;
 
 			tbody.appendChild(tr);
@@ -70,6 +92,6 @@
 		}
 
 		fetchFileList();
-	</script>
+		</script>
 </body>
 </html>
