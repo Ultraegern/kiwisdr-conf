@@ -33,7 +33,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   sudo rm -R /tmp/kiwisdr-conf-main
 
   echo "✅ The KiwiSDR configuration is complete."
-  if [ ${1:-} == "--no-reboot" ]; then
+  if [ "${1:-}" = "--no-reboot" ]; then
     echo "ℹ️ The --no-reboot flag was provided, so the KiwiSDR will not reboot now."
     exit 0
   else
