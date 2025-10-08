@@ -11,10 +11,6 @@
   <h1>KiwiRecorder</h1>
   <p>Use this interface to start and stop recordings on the KiwiSDR.</p>
   <div class="field-group">
-    <label class="field">
-      <span>Duration (sec) ("0" for infinite):</span>
-      <input type="number" id="duration" value="0" min="0" step="1">
-    </label>
   </div>
 
 
@@ -27,7 +23,6 @@
     const statusDiv = document.getElementById('status');
 
     async function startRecording() {
-      const duration = document.getElementById('duration').value;
 
       statusDiv.innerText = 'Starting recording...';
 
@@ -35,7 +30,6 @@
         const responseRaw = await fetch('/api/recorder/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ duration })
         });
         const response = await responseRaw.json();
         statusDiv.innerText = response.message;

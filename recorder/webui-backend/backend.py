@@ -22,9 +22,6 @@ recording_process: Optional[subprocess.Popen] = None
 def start_recording() -> Any: #Union[Tuple[Dict[str, str], int], Dict[str, str]]:
     global recording_process, recording_nr
     try:
-        data: dict[str, Any] = request.get_json()  # type: ignore
-        duration: str = str(data.get('duration'))
-        autostop: bool = not (duration == "0")
         # python3 kiwirecorder.py -s <kiwi_host> -p <port> -m iq --kiwi-wav -d <dir> --filename <filename> --station <filename nr 2>
         cmd = [
             'python3', 'kiwirecorder.py',
@@ -45,15 +42,7 @@ def start_recording() -> Any: #Union[Tuple[Dict[str, str], int], Dict[str, str]]
         )
 
         recording_nr = (recording_nr + 1) % 10000  # Wrap around after 9999
-        if autostop:
-            # If autostop is enabled, wait for the specified duration and then stop the recording
-            recording_process.wait(timeout=int(duration))
-            recording_process.terminate()
-            recording_process = None
-            rebuild_file_index_list()
-            return {"message": f"Recording has started, and will stop in {duration} seconds."}
-        else:
-            return {"message": "Recording has started and will continue until stopped manually."}    
+        return {"message": "Recording has started and will continue until stopped manually."}    
     except Exception as e:
         return {"message": f"Error starting recording: {e}"}, 500
 
