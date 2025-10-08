@@ -31,3 +31,4 @@ sudo systemctl enable recorder-backend.service
 sudo systemctl start recorder-backend.service
 sudo systemctl status recorder-backend.service --no-pager
 echo "✅ recorder-backend.service is set up and running."
+echo "ℹ️ To view logs: journalctl -u recorder-backend.service -f"
