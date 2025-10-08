@@ -8,54 +8,63 @@
 </head>
 <body>
 	<div class="background"></div>
-	<h1>SDR Recordings</h1>
+	<h1>KiwiFiles</h1>
 	<p>Browse and download your recordings below:</p>
 
-	<div id="file-container"></div>
+	<div class="grid" id="file-grid"></div>
 
 	<script>
-		const LIST_URL = '/recorder/list.json';
 		const DOWNLOAD_URL = '/recorder/download/';
 
-		async function fetchFiles() {
+		async function fetchFileList() {
 			try {
-			const response = await fetch(LIST_URL);
-			const files = await response.json();
-			renderFiles(files);
+				const res = await fetch(DOWNLOAD_URL);
+				const text = await res.text();
+				const parser = new DOMParser();
+				const doc = parser.parseFromString(text, 'text/html');
+				
+				const links = [...doc.querySelectorAll('a')]
+					.filter(a => a.getAttribute('href') && !a.getAttribute('href').startsWith('?') && a.getAttribute('href') !== '../');
+
+				const grid = document.getElementById('file-grid');
+
+				if (!links.length) {
+					grid.innerHTML = "<p>No recordings found.</p>";
+					return;
+				}
+
+				links.forEach(link => {
+					const fileName = link.textContent.trim();
+					const fileUrl = DOWNLOAD_URL + encodeURIComponent(fileName);
+
+					const card = document.createElement('a');
+					card.className = 'card';
+					card.href = fileUrl;
+					card.target = '_blank';
+
+					const cardMedia = document.createElement('div');
+					cardMedia.className = 'card-media';
+					cardMedia.style.backgroundImage = 'url(/media/kiwisdr.png)';
+
+					const cardTitle = document.createElement('div');
+					cardTitle.className = 'card-title';
+					cardTitle.textContent = fileName;
+
+					const cardBody = document.createElement('div');
+					cardBody.className = 'card-body';
+					cardBody.textContent = 'Click to download';
+
+					card.appendChild(cardMedia);
+					card.appendChild(cardTitle);
+					card.appendChild(cardBody);
+					grid.appendChild(card);
+				});
 			} catch (err) {
-			document.getElementById('file-container').innerHTML = `<p>Failed to load files: ${err}</p>`;
+				document.getElementById('file-grid').innerHTML = `<p>Error loading files: ${err.message}</p>`;
 			}
 		}
 
-		function renderFiles(files) {
-			const container = document.getElementById('file-container');
-			if (!files.length) {
-			container.innerHTML = '<p>No recordings found.</p>';
-			return;
-			}
-
-			files.forEach(file => {
-			const fileRow = document.createElement('div');
-			fileRow.className = 'field';
-
-			const nameSpan = document.createElement('span');
-			const size = (file.size / 1024 / 1024).toFixed(1) + ' MB';
-			const date = new Date(file.mtime * 1000).toLocaleString();
-			nameSpan.textContent = `${file.name}  (${size}, ${date})`;
-
-			const downloadBtn = document.createElement('button');
-			downloadBtn.textContent = 'Download';
-			downloadBtn.onclick = () => {
-					window.open(DOWNLOAD_URL + file.name, '_blank');
-			};
-
-			fileRow.appendChild(nameSpan);
-			fileRow.appendChild(downloadBtn);
-			container.appendChild(fileRow);
-			});
-    }
-
-	fetchFiles();
+		fetchFileList();
 	</script>
 </body>
 </html>

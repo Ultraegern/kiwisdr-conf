@@ -69,23 +69,7 @@ def stop_recording() -> Any: #Union[Tuple[Dict[str, str], int], Dict[str, str]]:
             return {"message": "No recording is running."}, 400
     except Exception as e:
         return {"message": f"Error stopping recording: {e}"}, 500
-    finally:
-        rebuild_file_index_list()
     
-
-RECORDINGS_DIR = Path("/var/recorder/recorded-files/")
-LIST_FILE = RECORDINGS_DIR / "list.json"
-def rebuild_file_index_list() -> None:
-    files = []
-    for f in sorted(RECORDINGS_DIR.iterdir(), key=os.path.getmtime, reverse=True):
-        if f.is_file() and f.name != "list.json":
-            files.append({
-                "name": f.name,
-                "size": f.stat().st_size,
-                "mtime": f.stat().st_mtime  # last modified, Unix timestamp
-            })
-
-    LIST_FILE.write_text(json.dumps(files, indent=2))
 
 
 if __name__ == '__main__':
