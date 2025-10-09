@@ -2,7 +2,7 @@
 This repo installs and configues:
 * Nginx as a TLS endpoint, webserver for static files, and a proxy for everything else
 * KiwiClient as a tool for recording from the Kiwi
-* Python 3.9 + Flask as a webserver for exposing KiwiClient as a REST api 
+* Rust + Actix Web as a webserver for exposing KiwiClient as a REST api 
 ### Compatability
 Oficial .img files are [here](http://kiwisdr.com/quickstart/index.html#id-dload).  
 This repo is known to work with
