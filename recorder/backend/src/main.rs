@@ -4,13 +4,20 @@ use serde::Serialize;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 
-// Shared mutable state
 static RECORDING_PROCESS: Lazy<Mutex<Option<Child>>> = Lazy::new(|| Mutex::new(None));
 static RECORDING_NR: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
 
 #[derive(Serialize)]
 struct Message {
     message: String,
+}
+
+fn is_recording_alive(child: &mut Child) -> bool {
+    match child.try_wait() {
+        Ok(Some(_)) => false, // child exited
+        Ok(None) => true,     // still running
+        Err(_) => false,      // treat errors as dead
+    }
 }
 
 // GET /api/status
@@ -25,10 +32,16 @@ async fn start_recording() -> impl Responder {
     let mut process_lock = RECORDING_PROCESS.lock().unwrap();
     let mut nr_lock = RECORDING_NR.lock().unwrap();
 
-    if process_lock.is_some() {
-        return HttpResponse::BadRequest().json(Message {
-            message: "Recording is already running.".to_string(),
-        });
+    // Check if there is a running process
+    if let Some(child) = process_lock.as_mut() {
+        if is_recording_alive(child) {
+            return HttpResponse::BadRequest().json(Message {
+                message: "Recording is already running.".to_string(),
+            });
+        } else {
+            println!("Previous recording process has exited unexpectedly.");
+            *process_lock = None; // clear dead process
+        }
     }
 
     let station = format!("{:04}", *nr_lock);
@@ -50,8 +63,10 @@ async fn start_recording() -> impl Responder {
 
     match cmd {
         Ok(child) => {
+            println!("Recording started, PID={}", child.id());
             *process_lock = Some(child);
             *nr_lock = (*nr_lock + 1) % 10_000;
+
             HttpResponse::Ok().json(Message {
                 message: "Recording has started and will continue until stopped manually.".into(),
             })
@@ -67,13 +82,19 @@ async fn stop_recording() -> impl Responder {
     let mut process_lock = RECORDING_PROCESS.lock().unwrap();
 
     if let Some(mut child) = process_lock.take() {
-        match child.kill() {
-            Ok(_) => HttpResponse::Ok().json(Message {
-                message: "Recording stopped successfully.".to_string(),
-            }),
-            Err(e) => HttpResponse::InternalServerError().json(Message {
-                message: format!("Error stopping recording: {}", e),
-            }),
+        if is_recording_alive(&mut child) {
+            match child.kill() {
+                Ok(_) => HttpResponse::Ok().json(Message {
+                    message: "Recording stopped successfully.".to_string(),
+                }),
+                Err(e) => HttpResponse::InternalServerError().json(Message {
+                    message: format!("Error stopping recording: {}", e),
+                }),
+            }
+        } else {
+            HttpResponse::Ok().json(Message {
+                message: "Recording process was already stopped.".to_string(),
+            })
         }
     } else {
         HttpResponse::BadRequest().json(Message {

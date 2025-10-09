@@ -10,11 +10,13 @@ echo "⬜ Host architecture: $HOST_ARCH"
 # Rust targets
 TARGETS=("x86_64-unknown-linux-gnu" "aarch64-unknown-linux-gnu" "armv7-unknown-linux-gnueabihf")
 
-echo "⬜ Installing build dependencies..."
-echo "⬜ Updating package lists..."
-sudo apt update
-echo "⬜ Installing Docker"
-sudo apt install docker.io -y
+if ! docker info &>/dev/null; then
+    echo "⬜ Updating package lists..."
+    sudo apt update
+    echo "⬜ Installing Docker"
+    sudo apt install docker.io -y
+    echo "✅ Docker is now installed."
+fi
 
 # Ensure user is in Docker group
 if ! groups "$USER" | grep -q "\bdocker\b"; then
@@ -50,3 +52,7 @@ for target in "${TARGETS[@]}"; do
 done
 
 echo "✅ All builds completed successfully!"
+echo "ℹ️ Now signing binaries"
+cd ../..
+./sign.sh
+echo "✅ Signing completed successfully!"
