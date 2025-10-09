@@ -1,9 +1,17 @@
 #!/bin/bash
+set -e
 
-sign () {
+sign() {
     local file="$1"
-    gpg --batch --yes --armor --detach-sign --output "${file}.asc" "$file"
-    echo "✅ Signed $file"
+    local sig="${file}.asc"
+
+    # If signature doesn't exist or file is newer, re-sign
+    if [[ ! -f "$sig" || "$file" -nt "$sig" ]]; then
+        gpg --batch --yes --armor --detach-sign --output "$sig" "$file"
+        echo "✅ Signed $file"
+    else
+        echo "⏩ Skipped $file (no changes)"
+    fi
 }
 
 sign cert/renew-cert.service
