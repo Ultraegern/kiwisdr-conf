@@ -1,51 +1,62 @@
 #!/bin/bash
-# build.sh - Build KiwiRecorder backend for multiple architectures
+
 set -euo pipefail
 
 DIR=$(dirname "$(realpath "$0")")
 
-echo "⬜ Detecting host architecture..."
 HOST_ARCH=$(uname -m)
-echo "   → Host architecture: $HOST_ARCH"
+echo "⬜ Host architecture: $HOST_ARCH"
 
-# Function to build for a specific Rust target
+# Rust targets
+TARGETS=("x86_64-unknown-linux-gnu" "aarch64-unknown-linux-gnu" "armv7-unknown-linux-gnueabihf")
+
+echo "⬜ Ensuring Rust targets are installed..."
+for target in "${TARGETS[@]}"; do
+    rustup target add "$target" || true
+done
+
+# Install cross-compilers if missing
+echo "⬜ Installing cross-compilers for ARM..."
+if ! dpkg -s gcc-aarch64-linux-gnu &>/dev/null; then
+    sudo apt update
+    sudo apt install -y gcc-aarch64-linux-gnu
+fi
+if ! dpkg -s gcc-arm-linux-gnueabihf &>/dev/null; then
+    sudo apt install -y gcc-arm-linux-gnueabihf
+fi
+if ! dpkg -s binutils-aarch64-linux-gnu &>/dev/null; then
+    sudo apt install -y binutils-aarch64-linux-gnu
+fi
+
+# Setup Cargo config for cross-linking
+mkdir -p .cargo
+cat > .cargo/config.toml <<EOL
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-linux-gnu-gcc"
+
+[target.armv7-unknown-linux-gnueabihf]
+linker = "arm-linux-gnueabihf-gcc"
+EOL
+
+# Build function (runs in background)
 build_target() {
     local target=$1
     echo "⬜ Building for target: $target"
-    cargo build --release --target "$target"
+    cargo build --release --target "$target" --manifest-path "$DIR/Cargo.toml"
     echo "✅ Build complete: target/$target/release/backend"
 }
 
-# Check Rust toolchain
-if ! command -v cargo &>/dev/null; then
-    echo "❌ Cargo not found. Please install Rust before running this script."
-    exit 1
-fi
+# Build all targets in parallel
+pids=()
+for target in "${TARGETS[@]}"; do
+    build_target "$target" &
+    pids+=($!)
+done
 
-cd "$DIR"
+# Wait for all builds to complete
+for pid in "${pids[@]}"; do
+    wait "$pid"
+done
 
-# Ensure necessary targets are installed
-echo "⬜ Ensuring Rust targets are installed..."
-rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu armv7-unknown-linux-gnueabihf
-
-# Install cross-compilers for ARM if missing
-case "$HOST_ARCH" in
-    x86_64)
-        echo "⬜ Installing cross-compilers for ARM..."
-        sudo apt update -qq
-        sudo apt install -y -qq gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf
-        ;;
-    *)
-        echo "ℹ️ Host is not x86_64, assuming ARM cross-compiler not needed."
-        ;;
-esac
-
-# Build binaries for all targets
-build_target x86_64-unknown-linux-gnu
-build_target aarch64-unknown-linux-gnu
-build_target armv7-unknown-linux-gnueabihf
-
-echo "✅ All binaries built successfully."
-echo "   x86_64 → target/x86_64-unknown-linux-gnu/release/backend"
-echo "   aarch64 → target/aarch64-unknown-linux-gnu/release/backend"
-echo "   armv7 → target/armv7-unknown-linux-gnueabihf/release/backend"
+echo "✅ All builds completed successfully!"
+sleep 5 
