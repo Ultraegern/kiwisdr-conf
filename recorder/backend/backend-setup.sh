@@ -10,7 +10,7 @@ echo "⬜ Setting up recorder backend..."
 
 # Verify and install binary
 verify_signature $DIR/recorder/backend/target/release/backend
-sudo install -m 755 $DIR/recorder/backend/target/release/backend /usr/local/bin/recorder-backend
+sudo install -m 755 $DIR/recorder/backend/target/release/backend /usr/local/bin/kiwirecorder-backend
 
 sudo mkdir -p /var/recorder/recorded-files/gnss_pos/
 
