@@ -33,3 +33,5 @@ sign recorder/backend/backend.service
 sign recorder/backend/target/release/backend
 
 sign setup.sh
+
+sleep 3
