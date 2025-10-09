@@ -52,13 +52,8 @@ sudo systemctl stop kiwirecorder-backend.service
 sudo systemctl enable kiwirecorder-backend.service
 sudo systemctl restart kiwirecorder-backend.service
 
-# Show status cleanly
-if systemctl is-active --quiet kiwirecorder-backend.service; then
-    echo "✅ kiwirecorder-backend.service is set up and running."
-else
-    echo "⚠️ Service failed to start. Check logs with:"
-    echo "   journalctl -u kiwirecorder-backend.service -xe"
-fi
+systemctl status kiwirecorder-backend.service
+
 
 echo "✅ Api setup complete."
 echo "ℹ️ To view logs: journalctl -u kiwirecorder-backend.service -f"
