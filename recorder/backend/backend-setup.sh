@@ -48,6 +48,7 @@ sudo cp "$DIR/recorder/backend/backend.service" /etc/systemd/system/kiwirecorder
 
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
+sudo systemctl stop kiwirecorder-backend.service
 sudo systemctl enable kiwirecorder-backend.service
 sudo systemctl restart kiwirecorder-backend.service
 
