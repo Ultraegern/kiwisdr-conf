@@ -5,14 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KiwiRecorder</title>
   <link rel="stylesheet" href="/stylesheet.css">
+  <style>
+    #status {
+      margin-top: 1.5rem;
+      font-size: 1.1rem;
+    }
+    #recording-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+  </style>
 </head>
 <body>
   <div class="background"></div>
   <h1>KiwiRecorder</h1>
   <p>Use this interface to start and stop recordings on the KiwiSDR.</p>
-  <div class="field-group">
-  </div>
-
 
   <button onclick="startRecording()">Start Recording</button>
   <button onclick="stopRecording()">Stop Recording</button>
@@ -22,17 +32,39 @@
   <script>
     const statusDiv = document.getElementById('status');
 
-    async function startRecording() {
+    function formatUnixTimestamp(ts) {
+      if (!ts) return '—';
+      const date = new Date(ts * 1000);
+      return date.toLocaleString();
+    }
 
-      statusDiv.innerText = 'Starting recording...';
-
+    async function updateStatus() {
       try {
-        const responseRaw = await fetch('/api/recorder/start', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const response = await responseRaw.json();
-        statusDiv.innerText = response.message;
+        const res = await fetch('/api/recorder/status');
+        const data = await res.json();
+
+        const indicatorColor = data.recording ? 'red' : 'gray';
+        const startTime = data.start_time ? formatUnixTimestamp(data.start_time) : '—';
+
+        statusDiv.innerHTML = `
+          <div>
+            <span id="recording-indicator" style="background-color: ${indicatorColor};"></span>
+            <strong>Status:</strong> ${data.recording ? 'Recording' : 'Idle'}
+          </div>
+          <div><strong>Start Time:</strong> ${startTime}</div>
+        `;
+      } catch (err) {
+        statusDiv.innerText = 'Error fetching status: ' + err;
+      }
+    }
+
+    async function startRecording() {
+      statusDiv.innerText = 'Starting recording...';
+      try {
+        const res = await fetch('/api/recorder/start', { method: 'POST' });
+        const data = await res.json();
+        statusDiv.innerText = data.message;
+        setTimeout(updateStatus, 1000); // refresh after 1s
       } catch (e) {
         statusDiv.innerText = 'Error: ' + e;
       }
@@ -41,13 +73,18 @@
     async function stopRecording() {
       statusDiv.innerText = 'Stopping recording...';
       try {
-        const responseRaw = await fetch('/api/recorder/stop', { method: 'POST' });
-        const response = await responseRaw.json();
-        statusDiv.innerText = response.message;
+        const res = await fetch('/api/recorder/stop', { method: 'POST' });
+        const data = await res.json();
+        statusDiv.innerText = data.message;
+        setTimeout(updateStatus, 1000);
       } catch (e) {
         statusDiv.innerText = 'Error: ' + e;
       }
     }
+
+    // Auto-update every 5 seconds
+    updateStatus();
+    setInterval(updateStatus, 5000);
   </script>
 </body>
 </html>
