@@ -1,6 +1,7 @@
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use once_cell::sync::Lazy;
 use serde::Serialize;
+use serde_json::json;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 
@@ -31,21 +32,17 @@ async fn status() -> impl Responder {
 async fn recorder_status() -> impl Responder {
     let mut process_lock = RECORDING_PROCESS.lock().unwrap();
 
-    let is_running = if let Some(child) = process_lock.as_mut() {
+    let is_running: bool = if let Some(child) = process_lock.as_mut() {
         is_recording_alive(child)
     } else {
         false
     };
 
-    let status_msg = if is_running {
-        "Recording is running"
-    } else {
-        "No recording is running"
-    };
+    let recording: bool = is_running;
 
-    HttpResponse::Ok().json(Message {
-        message: status_msg.to_string(),
-    })
+    HttpResponse::Ok().json(json!({
+        "recording": recording
+    }))
 }
 
 // POST /api/recorder/start
@@ -126,7 +123,9 @@ async fn stop_recording() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    println!("Starting server on 0.0.0.0:5000...");
+    let port: u16 = 5002;
+
+    println!("Starting server on 0.0.0.0:{}", port);
     HttpServer::new(|| {
         App::new()
             .route("/api/status", web::get().to(status))
@@ -134,7 +133,7 @@ async fn main() -> std::io::Result<()> {
             .route("/api/recorder/start", web::post().to(start_recording))
             .route("/api/recorder/stop", web::post().to(stop_recording))
     })
-    .bind(("0.0.0.0", 5000))?
+    .bind(("0.0.0.0", port))?
     .run()
     .await
 }
