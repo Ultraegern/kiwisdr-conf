@@ -27,6 +27,27 @@ async fn status() -> impl Responder {
     })
 }
 
+// GET /api/recorder/status
+async fn recorder_status() -> impl Responder {
+    let mut process_lock = RECORDING_PROCESS.lock().unwrap();
+
+    let is_running = if let Some(child) = process_lock.as_mut() {
+        is_recording_alive(child)
+    } else {
+        false
+    };
+
+    let status_msg = if is_running {
+        "Recording is running"
+    } else {
+        "No recording is running"
+    };
+
+    HttpResponse::Ok().json(Message {
+        message: status_msg.to_string(),
+    })
+}
+
 // POST /api/recorder/start
 async fn start_recording() -> impl Responder {
     let mut process_lock = RECORDING_PROCESS.lock().unwrap();
@@ -109,6 +130,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .route("/api/status", web::get().to(status))
+            .route("/api/recorder/status", web::get().to(recorder_status))
             .route("/api/recorder/start", web::post().to(start_recording))
             .route("/api/recorder/stop", web::post().to(stop_recording))
     })
