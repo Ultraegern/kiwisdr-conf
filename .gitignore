@@ -1,0 +1,10 @@
+/recorder/backend/target/debug
+/recorder/backend/target/release/.fingerprint
+/recorder/backend/target/release/build
+/recorder/backend/target/release/deps
+/recorder/backend/target/release/examples
+/recorder/backend/target/release/incremental
+recorder/backend/target/.rustc_info.json
+recorder/backend/target/CACHEDIR.TAG
+recorder/backend/target/release/.cargo-lock
+recorder/backend/target/release/backend.d

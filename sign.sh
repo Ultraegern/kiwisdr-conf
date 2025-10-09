@@ -20,8 +20,8 @@ sign nginx/nginx-setup.sh
 sign nginx/nginx.conf
 
 sign recorder/kiwiclient/kiwiclient-setup.sh
-sign recorder/webui-backend/backend-setup.sh
-sign recorder/webui-backend/backend.service
-sign recorder/webui-backend/backend.py
+sign recorder/backend/backend-setup.sh
+sign recorder/backend/backend.service
+sign recorder/backend/target/release/backend
 
 sign setup.sh

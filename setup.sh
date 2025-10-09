@@ -28,7 +28,7 @@ verify_signature() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   verify_signature nginx/nginx-setup.sh && sudo chmod +x nginx/nginx-setup.sh && sudo ./nginx/nginx-setup.sh
   verify_signature recorder/kiwiclient/kiwiclient-setup.sh && sudo chmod +x recorder/kiwiclient/kiwiclient-setup.sh && sudo ./recorder/kiwiclient/kiwiclient-setup.sh
-  verify_signature recorder/webui-backend/backend-setup.sh && sudo chmod +x recorder/webui-backend/backend-setup.sh && sudo ./recorder/webui-backend/backend-setup.sh
+  verify_signature recorder/backend/backend-setup.sh && sudo chmod +x recorder/backend/backend-setup.sh && sudo ./recorder/backend/backend-setup.sh
 
   sudo rm -R /tmp/kiwisdr-conf-main
 
