@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-DIR=$(dirname "$(realpath "$0")")
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 HOST_ARCH=$(uname -m)
 echo "⬜ Host architecture: $HOST_ARCH"
@@ -10,53 +10,43 @@ echo "⬜ Host architecture: $HOST_ARCH"
 # Rust targets
 TARGETS=("x86_64-unknown-linux-gnu" "aarch64-unknown-linux-gnu" "armv7-unknown-linux-gnueabihf")
 
+echo "⬜ Installing build dependencies..."
+echo "⬜ Updating package lists..."
+sudo apt update
+echo "⬜ Installing Docker"
+sudo apt install docker.io -y
+
+# Ensure user is in Docker group
+if ! groups "$USER" | grep -q "\bdocker\b"; then
+    echo "⬜ Adding $USER to the docker group..."
+    sudo usermod -aG docker "$USER"
+    echo "ℹ️ You must log out and log back in (or run 'newgrp docker') for Docker permissions to take effect."
+    exit 1
+fi
+
+# Ensure Rust targets are installed
 echo "⬜ Ensuring Rust targets are installed..."
 for target in "${TARGETS[@]}"; do
     rustup target add "$target" || true
 done
 
-# Install cross-compilers if missing
-echo "⬜ Installing cross-compilers for ARM..."
-if ! dpkg -s gcc-aarch64-linux-gnu &>/dev/null; then
-    sudo apt update
-    sudo apt install -y gcc-aarch64-linux-gnu
-fi
-if ! dpkg -s gcc-arm-linux-gnueabihf &>/dev/null; then
-    sudo apt install -y gcc-arm-linux-gnueabihf
-fi
-if ! dpkg -s binutils-aarch64-linux-gnu &>/dev/null; then
-    sudo apt install -y binutils-aarch64-linux-gnu
+# Install cross if missing
+if ! command -v cross &>/dev/null; then
+    echo "⬜ Installing cross (for easy cross-compilation)..."
+    cargo install cross
 fi
 
-# Setup Cargo config for cross-linking
-mkdir -p .cargo
-cat > .cargo/config.toml <<EOL
-[target.aarch64-unknown-linux-gnu]
-linker = "aarch64-linux-gnu-gcc"
-
-[target.armv7-unknown-linux-gnueabihf]
-linker = "arm-linux-gnueabihf-gcc"
-EOL
-
-# Build function (runs in background)
+# Build function using cross
 build_target() {
     local target=$1
     echo "⬜ Building for target: $target"
-    cargo build --release --target "$target" --manifest-path "$DIR/Cargo.toml"
+    cross build --release --target $target
     echo "✅ Build complete: target/$target/release/backend"
 }
 
-# Build all targets in parallel
-pids=()
+# Build all targets sequentially (parallel builds can be added later)
 for target in "${TARGETS[@]}"; do
-    build_target "$target" &
-    pids+=($!)
-done
-
-# Wait for all builds to complete
-for pid in "${pids[@]}"; do
-    wait "$pid"
+    build_target "$target"
 done
 
 echo "✅ All builds completed successfully!"
-sleep 5 
