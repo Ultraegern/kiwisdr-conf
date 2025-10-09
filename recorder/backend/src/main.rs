@@ -4,9 +4,11 @@ use serde::Serialize;
 use serde_json::json;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 static RECORDING_PROCESS: Lazy<Mutex<Option<Child>>> = Lazy::new(|| Mutex::new(None));
 static RECORDING_NR: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
+static RECORDING_START_TIME: Lazy<Mutex<Option<SystemTime>>> = Lazy::new(|| Mutex::new(None));
 
 #[derive(Serialize)]
 struct Message {
@@ -23,14 +25,15 @@ fn is_recording_alive(child: &mut Child) -> bool {
 
 // GET /api/status
 async fn status() -> impl Responder {
-    HttpResponse::Ok().json(Message {
-        message: "API is online".to_string(),
-    })
+    HttpResponse::Ok().json(json!({
+        "status": "Api is Online"
+    }))
 }
 
 // GET /api/recorder/status
 async fn recorder_status() -> impl Responder {
     let mut process_lock = RECORDING_PROCESS.lock().unwrap();
+    let start_time_lock = RECORDING_START_TIME.lock().unwrap();
 
     let is_running: bool = if let Some(child) = process_lock.as_mut() {
         is_recording_alive(child)
@@ -38,10 +41,18 @@ async fn recorder_status() -> impl Responder {
         false
     };
 
-    let recording: bool = is_running;
+    // Convert start time to a Unix timestamp (if recording)
+    let start_timestamp = if is_running {
+        start_time_lock
+            .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+            .map(|d| d.as_secs())
+    } else {
+        None
+    };
 
     HttpResponse::Ok().json(json!({
-        "recording": recording
+        "recording": is_running,
+        "start_time": start_timestamp
     }))
 }
 
@@ -49,6 +60,7 @@ async fn recorder_status() -> impl Responder {
 async fn start_recording() -> impl Responder {
     let mut process_lock = RECORDING_PROCESS.lock().unwrap();
     let mut nr_lock = RECORDING_NR.lock().unwrap();
+    let mut start_time_lock = RECORDING_START_TIME.lock().unwrap();
 
     // Check if there is a running process
     if let Some(child) = process_lock.as_mut() {
@@ -59,6 +71,7 @@ async fn start_recording() -> impl Responder {
         } else {
             println!("Previous recording process has exited unexpectedly.");
             *process_lock = None; // clear dead process
+            *start_time_lock = None;
         }
     }
 
@@ -84,6 +97,7 @@ async fn start_recording() -> impl Responder {
             println!("Recording started, PID={}", child.id());
             *process_lock = Some(child);
             *nr_lock = (*nr_lock + 1) % 10_000;
+            *start_time_lock = Some(SystemTime::now());
 
             HttpResponse::Ok().json(Message {
                 message: "Recording has started and will continue until stopped manually.".into(),
@@ -98,18 +112,23 @@ async fn start_recording() -> impl Responder {
 // POST /api/recorder/stop
 async fn stop_recording() -> impl Responder {
     let mut process_lock = RECORDING_PROCESS.lock().unwrap();
+    let mut start_time_lock = RECORDING_START_TIME.lock().unwrap();
 
     if let Some(mut child) = process_lock.take() {
         if is_recording_alive(&mut child) {
             match child.kill() {
-                Ok(_) => HttpResponse::Ok().json(Message {
-                    message: "Recording stopped successfully.".to_string(),
-                }),
+                Ok(_) => {
+                    *start_time_lock = None;
+                    HttpResponse::Ok().json(Message {
+                        message: "Recording stopped successfully.".to_string(),
+                    })
+                }
                 Err(e) => HttpResponse::InternalServerError().json(Message {
                     message: format!("Error stopping recording: {}", e),
                 }),
             }
         } else {
+            *start_time_lock = None;
             HttpResponse::Ok().json(Message {
                 message: "Recording process was already stopped.".to_string(),
             })
