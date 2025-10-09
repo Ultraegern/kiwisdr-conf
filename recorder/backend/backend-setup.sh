@@ -9,7 +9,7 @@ DIR=/tmp/kiwisdr-conf-main
 echo "⬜ Setting up recorder backend..."
 
 # Verify and install binary
-verify_signature $DIR/recorder/backend/recorder-backend
+verify_signature $DIR/recorder/backend/target/release/backend
 sudo install -m 755 $DIR/recorder/backend/target/release/backend /usr/local/bin/recorder-backend
 
 sudo mkdir -p /var/recorder/recorded-files/gnss_pos/
