@@ -57,7 +57,11 @@ async fn status() -> impl Responder {
 
 // GET /api/recorder/status
 async fn recorder_status() -> impl Responder {
-    HttpResponse::Ok().json(get_recorder_status())
+    let status: RecorderStatus = get_recorder_status();
+    HttpResponse::Ok().json(json!({
+        "recording": status.recording,
+        "start_time": status.start_time
+    }))
 }
 
 // POST /api/recorder/start
