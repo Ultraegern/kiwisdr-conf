@@ -142,7 +142,7 @@ async fn stop_recording() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let port: u16 = 5002;
+    let port: u16 = 5000;
 
     println!("Starting server on 0.0.0.0:{}", port);
     HttpServer::new(|| {
