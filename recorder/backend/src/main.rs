@@ -5,6 +5,7 @@ use serde_json::json;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::fs::File;
 
 static RECORDING_PROCESS: Lazy<Mutex<Option<Child>>> = Lazy::new(|| Mutex::new(None));
 static RECORDING_NR: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
@@ -85,6 +86,9 @@ async fn start_recording() -> impl Responder {
         }
     }
 
+    let error_log: File = File::create("/var/log/kiwirecorder-error.log")
+    .expect("Failed to create error log");
+
     let station: String = format!("{:04}", *nr_lock);
     let cmd: Result<Child, std::io::Error> = Command::new("python3")
         .arg("kiwirecorder.py")
@@ -98,8 +102,8 @@ async fn start_recording() -> impl Responder {
             "--station", &station,
         ])
         .current_dir("/usr/local/src/kiwiclient/")
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stdout(Stdio::null()) // ignore normal output
+        .stderr(Stdio::from(error_log)) // log errors
         .spawn();
 
     match cmd {
