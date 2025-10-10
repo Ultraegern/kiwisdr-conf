@@ -5,28 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KiwiRecorder</title>
   <link rel="stylesheet" href="/stylesheet.css">
-  <style>
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-    #status {
-      margin-top: 1.5rem;
-      font-size: 1.1rem;
-    }
-    #recording-indicator {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin-right: 6px;
-    }
-    #message {
-      margin-top: 1rem;
-      color: #333;
-      font-style: italic;
-    }
-  </style>
 </head>
 <body>
   <div class="background"></div>
@@ -36,79 +14,8 @@
   <button id="startBtn" onclick="startRecording()">Start Recording</button>
   <button id="stopBtn" onclick="stopRecording()">Stop Recording</button>
 
-  <div id="status"></div>
-  <div id="message"></div>
-
   <script>
-    const statusDiv = document.getElementById('status');
-    const messageDiv = document.getElementById('message');
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-
-    function formatUnixTimestamp(ts) {
-      if (!ts) return '—';
-      const date = new Date(ts * 1000);
-      return date.toLocaleString();
-    }
-
-    function renderStatus(data) {
-      const indicatorColor = data.recording ? 'red' : 'gray';
-      const startTime = data.start_time ? formatUnixTimestamp(data.start_time) : '—';
-
-      statusDiv.innerHTML = `
-        <div>
-          <span id="recording-indicator" style="background-color: ${indicatorColor};"></span>
-          <strong>Status:</strong> ${data.recording ? 'Recording' : 'Idle'}
-        </div>
-        <div><strong>Start Time:</strong> ${startTime}</div>
-      `;
-
-      messageDiv.textContent = data.message ? data.message : '';
-
-      startBtn.disabled = data.recording;
-      stopBtn.disabled = !data.recording;
-    }
-
-    async function updateStatus() {
-      try {
-        const res = await fetch('/api/recorder/status');
-        const data = await res.json();
-        renderStatus(data);
-      } catch (err) {
-        messageDiv.textContent = 'Error fetching status: ' + err;
-      }
-    }
-
-    async function startRecording() {
-      startBtn.disabled = true;
-      messageDiv.textContent = 'Starting recording...';
-      try {
-        const res = await fetch('/api/recorder/start', { method: 'POST' });
-        const data = await res.json();
-        renderStatus(data);
-      } catch (e) {
-        messageDiv.textContent = 'Error: ' + e;
-      } finally {
-        setTimeout(updateStatus, 1000);
-      }
-    }
-
-    async function stopRecording() {
-      stopBtn.disabled = true;
-      messageDiv.textContent = 'Stopping recording...';
-      try {
-        const res = await fetch('/api/recorder/stop', { method: 'POST' });
-        const data = await res.json();
-        renderStatus(data);
-      } catch (e) {
-        messageDiv.textContent = 'Error: ' + e;
-      } finally {
-        setTimeout(updateStatus, 1000);
-      }
-    }
-
-    updateStatus();
-    setInterval(updateStatus, 5000);
+    
   </script>
 </body>
 </html>

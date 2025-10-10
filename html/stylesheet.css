@@ -57,6 +57,10 @@ button:focus {
     border-color: var(--accent-color);
     box-shadow: 0 0 8px var(--accent-color-shadow);
 }
+button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
 .center {
     display: flex;
     justify-content: center;
