@@ -5,7 +5,6 @@ use serde_json::json;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::fs::File;
 
 static RECORDING_PROCESS: Lazy<Mutex<Option<Child>>> = Lazy::new(|| Mutex::new(None));
 static RECORDING_NR: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
@@ -67,64 +66,67 @@ async fn recorder_status() -> impl Responder {
 
 // POST /api/recorder/start
 async fn start_recording() -> impl Responder {
-    let mut process_lock = RECORDING_PROCESS.lock().unwrap();
-    let mut nr_lock = RECORDING_NR.lock().unwrap();
-    let mut start_time_lock = RECORDING_START_TIME.lock().unwrap();
+    {
+        let mut process_lock = RECORDING_PROCESS.lock().unwrap();
+        let mut nr_lock = RECORDING_NR.lock().unwrap();
+        let mut start_time_lock = RECORDING_START_TIME.lock().unwrap();
 
-    if let Some(child) = process_lock.as_mut() {
-        if is_recording_alive(child) {
-            return HttpResponse::BadRequest().json(json!({
-                "message": "Recording is already running.",
-                "recording": true,
-                "start_time": start_time_lock
+        if let Some(child) = process_lock.as_mut() {
+            if is_recording_alive(child) {
+                // return early without calling get_recorder_status()
+                let start_time = start_time_lock
                     .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-                    .map(|d| d.as_secs())
-            }));
-        } else {
-            *process_lock = None;
-            *start_time_lock = None;
+                    .map(|d| d.as_secs());
+                return HttpResponse::BadRequest().json(json!({
+                    "message": "Recording is already running.",
+                    "recording": true,
+                    "start_time": start_time
+                }));
+            } else {
+                *process_lock = None;
+                *start_time_lock = None;
+            }
         }
-    }
 
-    let error_log: File = File::create("/var/log/kiwirecorder-error.log")
-    .expect("Failed to create error log");
-
-    let station: String = format!("{:04}", *nr_lock);
-    let cmd: Result<Child, std::io::Error> = Command::new("python3")
-        .arg("kiwirecorder.py")
-        .args([
-            "-s", "127.0.0.1",
-            "-p", "8073",
-            "-m", "iq",
-            "--kiwi-wav",
-            "-d", "/var/recorder/recorded-files/",
-            "--filename", "KiwiRecording",
-            "--station", &station,
-        ])
-        .current_dir("/usr/local/src/kiwiclient/")
-        .stdout(Stdio::null()) // ignore normal output
-        .stderr(Stdio::from(error_log)) // log errors
-        .spawn();
-
-    match cmd {
-        Ok(child) => {
-            println!("Recording started, PID={}", child.id());
-            *process_lock = Some(child);
-            *nr_lock = (*nr_lock + 1) % 10_000;
-            *start_time_lock = Some(SystemTime::now());
-            let status: RecorderStatus = get_recorder_status(); 
-            HttpResponse::Ok().json(json!({
-                "message": "Recording has started and will continue until stopped manually.",
-                "recording": status.recording,
-                "start_time": status.start_time
-            }))
+        let station = format!("{:04}", *nr_lock);
+        match Command::new("python3")
+            .arg("kiwirecorder.py")
+            .args([
+                "-s", "127.0.0.1",
+                "-p", "8073",
+                "-m", "iq",
+                "--kiwi-wav",
+                "-d", "/var/recorder/recorded-files/",
+                "--filename", "KiwiRecording",
+                "--station", &station,
+            ])
+            .current_dir("/usr/local/src/kiwiclient/")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+        {
+            Ok(child) => {
+                *process_lock = Some(child);
+                *nr_lock = (*nr_lock + 1) % 10_000;
+                *start_time_lock = Some(SystemTime::now());
+            }
+            Err(e) => {
+                return HttpResponse::InternalServerError().json(json!({
+                    "message": format!("Error starting recording: {}", e),
+                    "recording": false,
+                    "start_time": null
+                }));
+            }
         }
-        Err(e) => HttpResponse::InternalServerError().json(json!({
-            "message": format!("Error starting recording: {}", e),
-            "recording": false,
-            "start_time": null
-        })),
-    }
+    } // All locks drop here before we compute status
+
+    // Now safely compute status
+    let status = get_recorder_status();
+    HttpResponse::Ok().json(json!({
+        "message": "Recording has started and will continue until stopped manually.",
+        "recording": status.recording,
+        "start_time": status.start_time
+    }))
 }
 
 // POST /api/recorder/stop
