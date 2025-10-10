@@ -11,8 +11,9 @@ static RECORDING_NR: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
 static RECORDING_START_TIME: Lazy<Mutex<Option<SystemTime>>> = Lazy::new(|| Mutex::new(None));
 
 #[derive(Serialize)]
-struct Message {
-    message: String,
+struct RecorderStatus {
+    recording: bool,
+    start_time: Option<u64>, // Unix timestamp 
 }
 
 fn is_recording_alive(child: &mut Child) -> bool {
@@ -23,15 +24,7 @@ fn is_recording_alive(child: &mut Child) -> bool {
     }
 }
 
-// GET /api/status
-async fn status() -> impl Responder {
-    HttpResponse::Ok().json(json!({
-        "status": "Api is Online"
-    }))
-}
-
-// GET /api/recorder/status
-async fn recorder_status() -> impl Responder {
+fn get_recorder_status() -> RecorderStatus {
     let mut process_lock = RECORDING_PROCESS.lock().unwrap();
     let start_time_lock = RECORDING_START_TIME.lock().unwrap();
 
@@ -41,8 +34,7 @@ async fn recorder_status() -> impl Responder {
         false
     };
 
-    // Convert start time to a Unix timestamp (if recording)
-    let start_timestamp = if is_running {
+    let start_timestamp: Option<u64> = if is_running {
         start_time_lock
             .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
             .map(|d| d.as_secs())
@@ -50,10 +42,22 @@ async fn recorder_status() -> impl Responder {
         None
     };
 
-    HttpResponse::Ok().json(json!({
-        "recording": is_running,
-        "start_time": start_timestamp
+    RecorderStatus {
+        recording: is_running,
+        start_time: start_timestamp,
+    }
+}
+
+// GET /api/status
+async fn status() -> impl Responder {
+    HttpResponse::Ok().json(json!({ 
+        "status": "Api is Online" 
     }))
+}
+
+// GET /api/recorder/status
+async fn recorder_status() -> impl Responder {
+    HttpResponse::Ok().json(get_recorder_status())
 }
 
 // POST /api/recorder/start
@@ -62,21 +66,23 @@ async fn start_recording() -> impl Responder {
     let mut nr_lock = RECORDING_NR.lock().unwrap();
     let mut start_time_lock = RECORDING_START_TIME.lock().unwrap();
 
-    // Check if there is a running process
     if let Some(child) = process_lock.as_mut() {
         if is_recording_alive(child) {
-            return HttpResponse::BadRequest().json(Message {
-                message: "Recording is already running.".to_string(),
-            });
+            return HttpResponse::BadRequest().json(json!({
+                "message": "Recording is already running.",
+                "recording": true,
+                "start_time": start_time_lock
+                    .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+                    .map(|d| d.as_secs())
+            }));
         } else {
-            println!("Previous recording process has exited unexpectedly.");
-            *process_lock = None; // clear dead process
+            *process_lock = None;
             *start_time_lock = None;
         }
     }
 
-    let station = format!("{:04}", *nr_lock);
-    let cmd = Command::new("python3")
+    let station: String = format!("{:04}", *nr_lock);
+    let cmd: Result<Child, std::io::Error> = Command::new("python3")
         .arg("kiwirecorder.py")
         .args([
             "-s", "127.0.0.1",
@@ -98,14 +104,18 @@ async fn start_recording() -> impl Responder {
             *process_lock = Some(child);
             *nr_lock = (*nr_lock + 1) % 10_000;
             *start_time_lock = Some(SystemTime::now());
-
-            HttpResponse::Ok().json(Message {
-                message: "Recording has started and will continue until stopped manually.".into(),
-            })
+            let status: RecorderStatus = get_recorder_status(); 
+            HttpResponse::Ok().json(json!({
+                "message": "Recording has started and will continue until stopped manually.",
+                "recording": status.recording,
+                "start_time": status.start_time
+            }))
         }
-        Err(e) => HttpResponse::InternalServerError().json(Message {
-            message: format!("Error starting recording: {}", e),
-        }),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "message": format!("Error starting recording: {}", e),
+            "recording": false,
+            "start_time": null
+        })),
     }
 }
 
@@ -119,31 +129,43 @@ async fn stop_recording() -> impl Responder {
             match child.kill() {
                 Ok(_) => {
                     *start_time_lock = None;
-                    HttpResponse::Ok().json(Message {
-                        message: "Recording stopped successfully.".to_string(),
-                    })
+                    let status: RecorderStatus = get_recorder_status();
+                    HttpResponse::Ok().json(json!({
+                        "message": "Recording stopped successfully.",
+                        "recording": status.recording,
+                        "start_time": status.start_time
+                    }))
                 }
-                Err(e) => HttpResponse::InternalServerError().json(Message {
-                    message: format!("Error stopping recording: {}", e),
-                }),
+                Err(e) => HttpResponse::InternalServerError().json(json!({
+                    "message": format!("Error stopping recording: {}", e),
+                    "recording": true,
+                    "start_time": start_time_lock
+                        .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+                        .map(|d| d.as_secs())
+                })),
             }
         } else {
             *start_time_lock = None;
-            HttpResponse::Ok().json(Message {
-                message: "Recording process was already stopped.".to_string(),
-            })
+            let status: RecorderStatus = get_recorder_status();
+            HttpResponse::BadRequest().json(json!({
+                "message": "Recording process was already stopped.",
+                "recording": status.recording,
+                "start_time": status.start_time
+            }))
         }
     } else {
-        HttpResponse::BadRequest().json(Message {
-            message: "No recording is running.".to_string(),
-        })
+        let status: RecorderStatus = get_recorder_status();
+        HttpResponse::Ok().json(json!({
+            "message": "No recording is running.",
+            "recording": status.recording,
+            "start_time": status.start_time
+        }))
     }
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let port: u16 = 5000;
-
     println!("Starting server on 0.0.0.0:{}", port);
     HttpServer::new(|| {
         App::new()
