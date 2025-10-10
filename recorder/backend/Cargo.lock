@@ -231,6 +231,7 @@ dependencies = [
  "actix-web",
  "once_cell",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
