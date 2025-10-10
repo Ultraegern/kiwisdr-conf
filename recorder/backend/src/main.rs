@@ -1,4 +1,4 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 use serde_json::json;
 
 #[actix_web::main]
@@ -21,4 +21,3 @@ async fn status() -> impl Responder {
         "status": "Api is Online" 
     }))
 }
-
