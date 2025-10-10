@@ -173,7 +173,6 @@ button:disabled {
   justify-content: center;
   margin-top: 2rem;
 }
-
 table {
   border-collapse: collapse;
   width: 90%;
@@ -184,7 +183,6 @@ table {
   border-radius: 8px;
   overflow: hidden;
 }
-
 th, td {
   padding: 12px 16px;
   text-align: left;
@@ -194,17 +192,13 @@ th, td {
 table tr:last-child td {
   border-bottom: none;
 }
-
-
 th {
   background-color: var(--main-color-dark);
   font-weight: 600;
 }
-
 tr:hover {
   background-color: var(--main-color-medium-hover);
 }
-
 a button {
   margin: 0;
   font-size: 0.9em;
