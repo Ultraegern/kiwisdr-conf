@@ -5,7 +5,7 @@ use chrono;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let port: u16 = 5004;
-    
+
     println!("Starting server on port {}", port);
     HttpServer::new(|| {
         App::new()
@@ -27,7 +27,7 @@ async fn status() -> impl Responder {
 #[post("/api/recorder/start")]
 async fn start_recorder() -> impl Responder {
 
-    let start_time = chrono::Utc::now().to_rfc3339();
+    let start_time: i64 = chrono::Utc::now().timestamp();
     HttpResponse::Ok().json(json!({ 
         "recording": true, 
         "started_at": start_time
