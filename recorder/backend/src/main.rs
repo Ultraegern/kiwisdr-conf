@@ -139,9 +139,14 @@ async fn stop_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) -> 
             return HttpResponse::BadRequest().json(json!({ 
                 "message": "No recorder is running",
                 "recording": false,
-                "started_at": None
+                "started_at": Option::<u64>::None
             }));
         }
     }
 
+    return HttpResponse::Ok().json(json!({ 
+        "message": "Recorder stoped successfully",
+        "recording": false,
+        "started_at": Option::<u64>::None
+    }))
 }
