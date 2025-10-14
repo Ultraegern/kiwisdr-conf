@@ -38,9 +38,8 @@ async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRe
         }
 
     }
-    let mut state = recorder.lock().await;
-    state.logs.push_back(format!("[{}] {}: <closed>", chrono::Utc::now().to_rfc3339(), pipe_tag));
     if responsible_for_exit {
+        let mut state = recorder.lock().await;
         state.running = false;
         state.started_at = None;
         state.logs.push_back(format!("[{}]: <exited>", chrono::Utc::now().to_rfc3339()));
