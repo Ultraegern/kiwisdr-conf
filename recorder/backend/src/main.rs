@@ -114,8 +114,18 @@ async fn start_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) ->
         }
     }
 
-    let mut child: Child = tokio::process::Command::new("ping")
-        .arg("1.1.1.1")
+    let mut child: Child = tokio::process::Command::new("python3")
+        .arg("kiwirecorder.py")
+        .args([
+            "-s", "127.0.0.1",
+            "-p", "8073",
+            "-m", "iq",
+            "--kiwi-wav",
+            "-d", "/var/recorder/recorded-files/",
+            "--filename", "KiwiRecording",
+            "--station", &chrono::Utc::now().format("%Y/%m/%d %H:%M:%S UTC").to_string(),
+        ])
+        .current_dir("/usr/local/src/kiwiclient/")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
