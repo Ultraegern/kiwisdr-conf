@@ -123,7 +123,7 @@ async fn start_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) ->
             "--kiwi-wav",
             "-d", "/var/recorder/recorded-files/",
             "--filename", "KiwiRecording",
-            "--station", &chrono::Utc::now().format("%Y/%m/%d %H:%M:%S UTC").to_string(),
+            "--station", &chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string(),
         ])
         .current_dir("/usr/local/src/kiwiclient/")
         .stdout(Stdio::piped())
