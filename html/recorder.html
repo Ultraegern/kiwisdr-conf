@@ -17,7 +17,10 @@
       <button id="stopBtn" onclick="stopRecording()">Stop Recording</button>
     </div>
 
-    <div id="statusBox" style="margin-top: 30px;">
+    <!-- New Message Field -->
+    <div id="messageBox" style="margin-top: 20px; font-weight: bold; color: var(--accent-color);"></div>
+
+    <div id="statusBox" style="margin-top: 20px;">
       <h2>Status: <span id="recorderStatus">Loading...</span></h2>
       <p id="startedAt"></p>
     </div>
@@ -86,10 +89,10 @@
       try {
         const response = await fetch(`${API_BASE}/recorder/start`, { method: 'POST' });
         const data = await response.json();
-        alert(data.message);
+        document.getElementById('messageBox').textContent = data.message;  // Update message field
         await getRecorderStatus();
       } catch (err) {
-        alert("Failed to start recorder.");
+        document.getElementById('messageBox').textContent = "Failed to start recorder.";
       }
     }
 
@@ -97,10 +100,10 @@
       try {
         const response = await fetch(`${API_BASE}/recorder/stop`, { method: 'POST' });
         const data = await response.json();
-        alert(data.message);
+        document.getElementById('messageBox').textContent = data.message;  // Update message field
         await getRecorderStatus();
       } catch (err) {
-        alert("Failed to stop recorder.");
+        document.getElementById('messageBox').textContent = "Failed to stop recorder.";
       }
     }
 
