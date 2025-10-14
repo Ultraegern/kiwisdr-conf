@@ -30,10 +30,9 @@ sign nginx/nginx.conf
 sign recorder/kiwiclient/kiwiclient-setup.sh
 sign recorder/backend/backend-setup.sh
 sign recorder/backend/backend.service
-sign recorder/backend/target/release/backend
-sign recorder/backend/target/armv7-unknown-linux-gnueabihf/release/backend
-sign recorder/backend/target/aarch64-unknown-linux-gnu/release/backend
-sign recorder/backend/target/x86_64-unknown-linux-gnu/release/backend
+sign recorder/backend/build/backend.armv7
+sign recorder/backend/build/backend.aarch64
+sign recorder/backend/build/backend.x86_64
 
 sign setup.sh
 
