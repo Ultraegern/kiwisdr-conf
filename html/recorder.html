@@ -8,14 +8,105 @@
 </head>
 <body>
   <div class="background"></div>
-  <h1>KiwiRecorder</h1>
-  <p>Use this interface to start and stop recordings on the KiwiSDR.</p>
+  <div class="center">
+    <h1>KiwiRecorder</h1>
+    <p>Control and monitor your KiwiSDR recordings.</p>
 
-  <button id="startBtn" onclick="startRecording()">Start Recording</button>
-  <button id="stopBtn" onclick="stopRecording()">Stop Recording</button>
+    <div>
+      <button id="startBtn" onclick="startRecording()">Start Recording</button>
+      <button id="stopBtn" onclick="stopRecording()">Stop Recording</button>
+    </div>
+
+    <div id="statusBox" style="margin-top: 30px;">
+      <h2>Status: <span id="recorderStatus">Loading...</span></h2>
+      <p id="startedAt"></p>
+    </div>
+
+    <div class="table-container" id="logsContainer" style="display:none;">
+      <table>
+        <thead>
+          <tr><th>Recent Logs</th></tr>
+        </thead>
+        <tbody id="logTableBody"></tbody>
+      </table>
+    </div>
+  </div>
 
   <script>
-    
+    const API_BASE = "https://kiwisdr.local/api";
+
+    async function getRecorderStatus() {
+      try {
+        const response = await fetch(`${API_BASE}/recorder/status`);
+        const data = await response.json();
+
+        const statusEl = document.getElementById('recorderStatus');
+        const startedAtEl = document.getElementById('startedAt');
+        const logsContainer = document.getElementById('logsContainer');
+        const logTableBody = document.getElementById('logTableBody');
+
+        if (data.recording) {
+          statusEl.textContent = "Recording";
+          statusEl.style.color = "#ff5555";
+          document.getElementById('startBtn').disabled = true;
+          document.getElementById('stopBtn').disabled = false;
+        } else {
+          statusEl.textContent = "Not Recording";
+          statusEl.style.color = "#aaa";
+          document.getElementById('startBtn').disabled = false;
+          document.getElementById('stopBtn').disabled = true;
+        }
+
+        if (data.started_at) {
+          const date = new Date(data.started_at * 1000);
+          startedAtEl.textContent = `Started at: ${date.toLocaleString()}`;
+        } else {
+          startedAtEl.textContent = "";
+        }
+
+        if (data.last_logs && data.last_logs.length > 0) {
+          logsContainer.style.display = "flex";
+          logTableBody.innerHTML = "";
+          for (const log of data.last_logs) {
+            const row = document.createElement("tr");
+            const cell = document.createElement("td");
+            cell.textContent = log;
+            row.appendChild(cell);
+            logTableBody.appendChild(row);
+          }
+        } else {
+          logsContainer.style.display = "none";
+        }
+      } catch (err) {
+        console.error("Failed to fetch recorder status:", err);
+      }
+    }
+
+    async function startRecording() {
+      try {
+        const response = await fetch(`${API_BASE}/recorder/start`, { method: 'POST' });
+        const data = await response.json();
+        alert(data.message);
+        await getRecorderStatus();
+      } catch (err) {
+        alert("Failed to start recorder.");
+      }
+    }
+
+    async function stopRecording() {
+      try {
+        const response = await fetch(`${API_BASE}/recorder/stop`, { method: 'POST' });
+        const data = await response.json();
+        alert(data.message);
+        await getRecorderStatus();
+      } catch (err) {
+        alert("Failed to stop recorder.");
+      }
+    }
+
+    // Initial fetch + periodic updates
+    getRecorderStatus();
+    setInterval(getRecorderStatus, 4000);
   </script>
 </body>
 </html>
