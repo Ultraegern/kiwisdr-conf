@@ -64,6 +64,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(actix_web::web::Data::new(shared_recorder.clone()))
             .service(status)
             .service(start_recorder)
+            .service(stop_recorder)
+            .service(recorder_status)
     })
     .bind(("0.0.0.0", port))?
     .run()
@@ -75,6 +77,36 @@ async fn status() -> impl Responder {
     HttpResponse::Ok().body(
         "Api is Online"
     )
+}
+
+#[get["/api/recorder/status"]]
+async fn recorder_status(recorder_state: actix_web::web::Data<SharedRecorder>) -> impl Responder {
+    let state = recorder_state.lock().await;
+    let is_recording = state.running;
+    let started_at = state.started_at;
+    let logs = state.logs.clone();
+    drop(state);
+
+    let last_5_logs: Vec<String> = logs
+        .iter()
+        .rev()               // start from the newest
+        .take(5)              // take last 5
+        .cloned()             // copy them out
+        .collect::<Vec<_>>()
+        .into_iter()
+        .collect();
+
+    let message: String = match is_recording {
+        true => "Recording",
+        false => "Not Recording"
+    }.to_string();
+
+    return HttpResponse::Ok().json(json!({ 
+        "message": message,
+        "recording": is_recording,
+        "started_at": get_start_time_unix(started_at),
+        "last_logs": last_5_logs
+    }))
 }
 
 #[post("/api/recorder/start")]
@@ -138,6 +170,22 @@ async fn stop_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) -> 
             }));
         }
     }
+
+    let mut state = recorder_state.lock().await;
+    state.running = false;
+    state.started_at = None;
+    let child = state.process.take();
+    drop(state);
+
+    if let Some(mut child) = child {
+        let _ = child.kill().await;
+        let _ = child.wait().await;
+    }
+
+    let mut state = recorder_state.lock().await;
+    state.process = None;
+    state.logs.push_back(format!("[{}]: <Stoped Manualy>", chrono::Utc::now().to_rfc3339()));
+    drop(state);
 
     return HttpResponse::Ok().json(json!({ 
         "message": "Recorder stoped successfully",
