@@ -21,7 +21,7 @@ async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRe
     let mut lines = reader.lines();
     while let Ok(Some(line)) = lines.next_line().await {
         let mut state = recorder.lock().await;
-        state.logs.push_back(format!("[{}] {}: {}", chrono::Utc::now().to_rfc3339(), pipe_tag, line));
+        state.logs.push_back(format!("[{}] {}: {}", chrono::Utc::now().format("%Y/%m/%d %H:%M:%S UTC").to_string(), pipe_tag, line));
         if state.logs.len() > 997 {
             state.logs.pop_front();
         }
@@ -31,7 +31,7 @@ async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRe
         let mut state = recorder.lock().await;
         state.running = false;
         state.started_at = None;
-        state.logs.push_back(format!("[{}]: <exited>", chrono::Utc::now().to_rfc3339()));
+        state.logs.push_back(format!("[{}]: <Exited>", chrono::Utc::now().format("%Y/%m/%d %H:%M:%S UTC").to_string()));
     }
 }
 
@@ -172,7 +172,7 @@ async fn stop_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) -> 
 
     let mut state = recorder_state.lock().await;
     state.process = None;
-    state.logs.push_back(format!("[{}]: <Stoped Manualy>", chrono::Utc::now().to_rfc3339()));
+    state.logs.push_back(format!("[{}]: <Stoped Manualy>", chrono::Utc::now().format("%Y/%m/%d %H:%M:%S UTC").to_string()));
     drop(state);
 
     return HttpResponse::Ok().json(json!({ 
