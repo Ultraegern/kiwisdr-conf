@@ -4,28 +4,17 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use std::collections::VecDeque;
 use std::process::Stdio;
 use std::sync::Arc;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tokio::process::Child;
 use tokio::sync::Mutex;
 
 struct RecorderState {
     running: bool,
     process: Option<Child>,
-    started_at: Option<Instant>,
+    started_at: Option<u64>,
     logs: VecDeque<String>,
 }
 
 type SharedRecorder = Arc<Mutex<RecorderState>>;
-
-fn get_start_time_unix(started_at: Option<Instant>) -> Option<u64> {
-    let now_unix: u64 = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .ok()?
-        .as_secs();
-    let seconds_since_start: u64 = Instant::now().duration_since(started_at?).as_secs();
-    let start_unix: u64 = now_unix.saturating_sub(seconds_since_start);
-    return Some(start_unix);
-}
 
 async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRecorder, pipe_tag: &str, responsible_for_exit: bool) {
     let reader = BufReader::new(pipe);
@@ -103,7 +92,7 @@ async fn recorder_status(recorder_state: actix_web::web::Data<SharedRecorder>) -
     return HttpResponse::Ok().json(json!({ 
         "message": message,
         "recording": is_recording,
-        "started_at": get_start_time_unix(started_at),
+        "started_at": started_at,
         "last_logs": last_5_logs
     }))
 }
@@ -112,15 +101,15 @@ async fn recorder_status(recorder_state: actix_web::web::Data<SharedRecorder>) -
 async fn start_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) -> impl Responder {
     {
         let check_state = recorder_state.lock().await;
-        let is_recorder_running: bool = check_state.running;
-        let recorder_start_time: Option<Instant> = check_state.started_at;
+        let is_recorder_running = check_state.running;
+        let recorder_start_time = check_state.started_at;
         drop(check_state);
 
         if is_recorder_running{ // Exit if already running
             return HttpResponse::BadRequest().json(json!({ 
                 "message": "Recorder is already running",
                 "recording": true,
-                "started_at": get_start_time_unix(recorder_start_time)
+                "started_at": recorder_start_time
             }));
         }
     }
@@ -142,15 +131,15 @@ async fn start_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) ->
     let mut state = recorder_state.lock().await;
     state.process = Some(child);
     state.running = true;
-    state.started_at = Some(Instant::now());
-    let started_at: Option<Instant> = state.started_at;
+    state.started_at = Some(chrono::Utc::now().timestamp() as u64);
+    let started_at = state.started_at;
     drop(state);
     
 
     return HttpResponse::Ok().json(json!({ 
         "message": "Recorder started successfully",
         "recording": true,
-        "started_at": get_start_time_unix(started_at)
+        "started_at": started_at
     }))
 }
 
