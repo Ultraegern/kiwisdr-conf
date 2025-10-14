@@ -17,8 +17,7 @@
       <button id="stopBtn" onclick="stopRecording()">Stop Recording</button>
     </div>
 
-    <!-- New Message Field -->
-    <div id="messageBox" style="margin-top: 20px; font-weight: bold; color: var(--accent-color);"></div>
+    <div id="messageBox" style="margin-top: 20px; font-weight: bold; color: var(--text-color-muted);"></div>
 
     <div id="statusBox" style="margin-top: 20px;">
       <h2>Status: <span id="recorderStatus">Loading...</span></h2>
@@ -36,7 +35,7 @@
   </div>
 
   <script>
-    const API_BASE = "https://kiwisdr.local/api";
+    const API_BASE = "/api";
 
     async function getRecorderStatus() {
       try {
@@ -62,9 +61,9 @@
 
         if (data.started_at) {
           const date = new Date(data.started_at * 1000);
-          startedAtEl.textContent = `Started at: ${date.toLocaleString()}`;
+          startedAtEl.textContent = `Started at: ${date.toLocaleString(undefined, { hour12: false })}`;;
         } else {
-          startedAtEl.textContent = "";
+          startedAtEl.textContent = "Started at: --/--/--, --:--:--";
         }
 
         if (data.last_logs && data.last_logs.length > 0) {
@@ -89,7 +88,7 @@
       try {
         const response = await fetch(`${API_BASE}/recorder/start`, { method: 'POST' });
         const data = await response.json();
-        document.getElementById('messageBox').textContent = data.message;  // Update message field
+        document.getElementById('messageBox').textContent = data.message;
         await getRecorderStatus();
       } catch (err) {
         document.getElementById('messageBox').textContent = "Failed to start recorder.";
@@ -100,14 +99,13 @@
       try {
         const response = await fetch(`${API_BASE}/recorder/stop`, { method: 'POST' });
         const data = await response.json();
-        document.getElementById('messageBox').textContent = data.message;  // Update message field
+        document.getElementById('messageBox').textContent = data.message;
         await getRecorderStatus();
       } catch (err) {
         document.getElementById('messageBox').textContent = "Failed to stop recorder.";
       }
     }
 
-    // Initial fetch + periodic updates
     getRecorderStatus();
     setInterval(getRecorderStatus, 4000);
   </script>
