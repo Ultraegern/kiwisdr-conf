@@ -20,7 +20,7 @@
     <div id="messageBox" style="margin-top: 20px; font-weight: bold; color: var(--text-color-muted);"></div>
 
     <div id="statusBox" style="margin-top: 20px;">
-      <h2>Status: <span id="recorderStatus">Loading...</span></h2>
+      <h2 style="color: var(--text-color)">Status: <span id="recorderStatus">Loading...</span></h2>
       <p id="startedAt"></p>
     </div>
 
@@ -49,12 +49,12 @@
 
         if (data.recording) {
           statusEl.textContent = "Recording";
-          statusEl.style.color = "#ff5555";
+          statusEl.style.color = "var(--accent-color)";
           document.getElementById('startBtn').disabled = true;
           document.getElementById('stopBtn').disabled = false;
         } else {
           statusEl.textContent = "Not Recording";
-          statusEl.style.color = "#aaa";
+          statusEl.style.color = "var(--text-color-muted);";
           document.getElementById('startBtn').disabled = false;
           document.getElementById('stopBtn').disabled = true;
         }
