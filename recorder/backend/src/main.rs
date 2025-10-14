@@ -1,190 +1,195 @@
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-use once_cell::sync::Lazy;
-use serde::Serialize;
+use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
 use serde_json::json;
-use std::process::{Child, Command, Stdio};
-use std::sync::Mutex;
-use std::time::{SystemTime, UNIX_EPOCH};
+use tokio::io::{AsyncBufReadExt, BufReader};
+use std::collections::VecDeque;
+use std::process::Stdio;
+use std::sync::Arc;
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use tokio::process::Child;
+use tokio::sync::Mutex;
 
-static RECORDING_PROCESS: Lazy<Mutex<Option<Child>>> = Lazy::new(|| Mutex::new(None));
-static RECORDING_NR: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
-static RECORDING_START_TIME: Lazy<Mutex<Option<SystemTime>>> = Lazy::new(|| Mutex::new(None));
-
-#[derive(Serialize)]
-struct RecorderStatus {
-    recording: bool,
-    start_time: Option<u64>, // Unix timestamp 
+struct RecorderState {
+    running: bool,
+    process: Option<Child>,
+    started_at: Option<Instant>,
+    logs: VecDeque<String>,
 }
 
-fn is_recording_alive(child: &mut Child) -> bool {
-    match child.try_wait() {
-        Ok(Some(_)) => false, // child exited
-        Ok(None) => true,     // still running
-        Err(_) => false,      // treat errors as dead
+type SharedRecorder = Arc<Mutex<RecorderState>>;
+
+fn get_start_time_unix(started_at: Option<Instant>) -> Option<u64> {
+    let now_unix: u64 = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .ok()?
+        .as_secs();
+    let seconds_since_start: u64 = Instant::now().duration_since(started_at?).as_secs();
+    let start_unix: u64 = now_unix.saturating_sub(seconds_since_start);
+    return Some(start_unix);
+}
+
+async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRecorder, pipe_tag: &str, responsible_for_exit: bool) {
+    let reader = BufReader::new(pipe);
+    let mut lines = reader.lines();
+    while let Ok(Some(line)) = lines.next_line().await {
+        let mut state = recorder.lock().await;
+        state.logs.push_back(format!("[{}] {}: {}", chrono::Utc::now().to_rfc3339(), pipe_tag, line));
+        if state.logs.len() > 997 {
+            state.logs.pop_front();
+        }
+
     }
-}
-
-fn get_recorder_status() -> RecorderStatus {
-    let mut process_lock = RECORDING_PROCESS.lock().unwrap();
-    let start_time_lock = RECORDING_START_TIME.lock().unwrap();
-
-    let is_running: bool = if let Some(child) = process_lock.as_mut() {
-        is_recording_alive(child)
-    } else {
-        false
-    };
-
-    let start_timestamp: Option<u64> = if is_running {
-        start_time_lock
-            .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-            .map(|d| d.as_secs())
-    } else {
-        None
-    };
-
-    RecorderStatus {
-        recording: is_running,
-        start_time: start_timestamp,
-    }
-}
-
-// GET /api/status
-async fn status() -> impl Responder {
-    HttpResponse::Ok().json(json!({ 
-        "status": "Api is Online" 
-    }))
-}
-
-// GET /api/recorder/status
-async fn recorder_status() -> impl Responder {
-    let status: RecorderStatus = get_recorder_status();
-    HttpResponse::Ok().json(json!({
-        "recording": status.recording,
-        "start_time": status.start_time
-    }))
-}
-
-// POST /api/recorder/start
-async fn start_recording() -> impl Responder {
-    {
-        let mut process_lock = RECORDING_PROCESS.lock().unwrap();
-        let mut nr_lock = RECORDING_NR.lock().unwrap();
-        let mut start_time_lock = RECORDING_START_TIME.lock().unwrap();
-
-        if let Some(child) = process_lock.as_mut() {
-            if is_recording_alive(child) {
-                // return early without calling get_recorder_status()
-                let start_time = start_time_lock
-                    .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-                    .map(|d| d.as_secs());
-                return HttpResponse::BadRequest().json(json!({
-                    "message": "Recording is already running.",
-                    "recording": true,
-                    "start_time": start_time
-                }));
-            } else {
-                *process_lock = None;
-                *start_time_lock = None;
-            }
-        }
-
-        let station = format!("{:04}", *nr_lock);
-        match Command::new("python3")
-            .arg("kiwirecorder.py")
-            .args([
-                "-s", "127.0.0.1",
-                "-p", "8073",
-                "-m", "iq",
-                "--kiwi-wav",
-                "-d", "/var/recorder/recorded-files/",
-                "--filename", "KiwiRecording",
-                "--station", &station,
-            ])
-            .current_dir("/usr/local/src/kiwiclient/")
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .spawn()
-        {
-            Ok(child) => {
-                *process_lock = Some(child);
-                *nr_lock = (*nr_lock + 1) % 10_000;
-                *start_time_lock = Some(SystemTime::now());
-            }
-            Err(e) => {
-                return HttpResponse::InternalServerError().json(json!({
-                    "message": format!("Error starting recording: {}", e),
-                    "recording": false,
-                    "start_time": null
-                }));
-            }
-        }
-    } // All locks drop here before we compute status
-
-    // Now safely compute status
-    let status = get_recorder_status();
-    HttpResponse::Ok().json(json!({
-        "message": "Recording has started and will continue until stopped manually.",
-        "recording": status.recording,
-        "start_time": status.start_time
-    }))
-}
-
-// POST /api/recorder/stop
-async fn stop_recording() -> impl Responder {
-    let mut process_lock = RECORDING_PROCESS.lock().unwrap();
-    let mut start_time_lock = RECORDING_START_TIME.lock().unwrap();
-
-    if let Some(mut child) = process_lock.take() {
-        if is_recording_alive(&mut child) {
-            match child.kill() {
-                Ok(_) => {
-                    *start_time_lock = None;
-                    let status: RecorderStatus = get_recorder_status();
-                    HttpResponse::Ok().json(json!({
-                        "message": "Recording stopped successfully.",
-                        "recording": status.recording,
-                        "start_time": status.start_time
-                    }))
-                }
-                Err(e) => HttpResponse::InternalServerError().json(json!({
-                    "message": format!("Error stopping recording: {}", e),
-                    "recording": true,
-                    "start_time": start_time_lock
-                        .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-                        .map(|d| d.as_secs())
-                })),
-            }
-        } else {
-            *start_time_lock = None;
-            let status: RecorderStatus = get_recorder_status();
-            HttpResponse::BadRequest().json(json!({
-                "message": "Recording process was already stopped.",
-                "recording": status.recording,
-                "start_time": status.start_time
-            }))
-        }
-    } else {
-        let status: RecorderStatus = get_recorder_status();
-        HttpResponse::Ok().json(json!({
-            "message": "No recording is running.",
-            "recording": status.recording,
-            "start_time": status.start_time
-        }))
+    let mut state = recorder.lock().await;
+    state.logs.push_back(format!("[{}] {}: <closed>", chrono::Utc::now().to_rfc3339(), pipe_tag));
+    if responsible_for_exit {
+        state.running = false;
+        state.started_at = None;
+        state.logs.push_back(format!("[{}]: <exited>", chrono::Utc::now().to_rfc3339()));
     }
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let port: u16 = 5000;
-    println!("Starting server on 0.0.0.0:{}", port);
-    HttpServer::new(|| {
+    let port: u16 = 5004;
+
+    let shared_recorder: SharedRecorder = Arc::new(Mutex::new(RecorderState {
+        running: false,
+        process: None,
+        started_at: None,
+        logs: VecDeque::new(),
+    }));
+
+    println!("Starting server on port {}", port);
+    HttpServer::new(move || {
         App::new()
-            .route("/api/status", web::get().to(status))
-            .route("/api/recorder/status", web::get().to(recorder_status))
-            .route("/api/recorder/start", web::post().to(start_recording))
-            .route("/api/recorder/stop", web::post().to(stop_recording))
+            .app_data(actix_web::web::Data::new(shared_recorder.clone()))
+            .service(status)
+            .service(start_recorder)
+            .service(stop_recorder)
+            .service(recorder_status)
     })
     .bind(("0.0.0.0", port))?
     .run()
     .await
+}
+
+#[get("/api/status")]
+async fn status() -> impl Responder {
+    HttpResponse::Ok().body(
+        "Api is Online"
+    )
+}
+
+#[get["/api/recorder/status"]]
+async fn recorder_status(recorder_state: actix_web::web::Data<SharedRecorder>) -> impl Responder {
+    let state = recorder_state.lock().await;
+    let is_recording = state.running;
+    let started_at = state.started_at;
+    let logs = state.logs.clone();
+    drop(state);
+
+    let last_5_logs: Vec<String> = logs
+        .iter()
+        .rev()               // start from the newest
+        .take(5)              // take last 5
+        .cloned()             // copy them out
+        .collect::<Vec<_>>()
+        .into_iter()
+        .collect();
+
+    let message: String = match is_recording {
+        true => "Recording",
+        false => "Not Recording"
+    }.to_string();
+
+    return HttpResponse::Ok().json(json!({ 
+        "message": message,
+        "recording": is_recording,
+        "started_at": get_start_time_unix(started_at),
+        "last_logs": last_5_logs
+    }))
+}
+
+#[post("/api/recorder/start")]
+async fn start_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) -> impl Responder {
+    {
+        let check_state = recorder_state.lock().await;
+        let is_recorder_running: bool = check_state.running;
+        let recorder_start_time: Option<Instant> = check_state.started_at;
+        drop(check_state);
+
+        if is_recorder_running{ // Exit if already running
+            return HttpResponse::BadRequest().json(json!({ 
+                "message": "Recorder is already running",
+                "recording": true,
+                "started_at": get_start_time_unix(recorder_start_time)
+            }));
+        }
+    }
+
+    let mut child: Child = tokio::process::Command::new("ping")
+        .arg("1.1.1.1")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("Failed to start recorder process");
+
+    if let Some(stdout) = child.stdout.take() {
+        tokio::spawn(read_output(stdout, recorder_state.get_ref().clone(), "STDOUT", true));
+    }
+    if let Some(stderr) = child.stderr.take() {
+       tokio::spawn(read_output(stderr, recorder_state.get_ref().clone(), "STDERR", false));
+    }
+    
+    let mut state = recorder_state.lock().await;
+    state.process = Some(child);
+    state.running = true;
+    state.started_at = Some(Instant::now());
+    let started_at: Option<Instant> = state.started_at;
+    drop(state);
+    
+
+    return HttpResponse::Ok().json(json!({ 
+        "message": "Recorder started successfully",
+        "recording": true,
+        "started_at": get_start_time_unix(started_at)
+    }))
+}
+
+#[post("/api/recorder/stop")]
+async fn stop_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) -> impl Responder {
+    {
+        let check_state = recorder_state.lock().await;
+        let is_recorder_running: bool = check_state.running;
+        drop(check_state);
+
+        if !is_recorder_running{ // Exit if not running
+            return HttpResponse::BadRequest().json(json!({ 
+                "message": "No recorder is running",
+                "recording": false,
+                "started_at": Option::<u64>::None
+            }));
+        }
+    }
+
+    let mut state = recorder_state.lock().await;
+    state.running = false;
+    state.started_at = None;
+    let child = state.process.take();
+    drop(state);
+
+    if let Some(mut child) = child {
+        let _ = child.kill().await;
+        let _ = child.wait().await;
+    }
+
+    let mut state = recorder_state.lock().await;
+    state.process = None;
+    state.logs.push_back(format!("[{}]: <Stoped Manualy>", chrono::Utc::now().to_rfc3339()));
+    drop(state);
+
+    return HttpResponse::Ok().json(json!({ 
+        "message": "Recorder stoped successfully",
+        "recording": false,
+        "started_at": Option::<u64>::None
+    }))
 }
