@@ -27,19 +27,24 @@ fn get_start_time_unix(started_at: Option<Instant>) -> Option<u64> {
     return Some(start_unix);
 }
 
-async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRecorder, pipe_tag: &str) {
+async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRecorder, pipe_tag: &str, responsible_for_exit: bool) {
     let reader = BufReader::new(pipe);
     let mut lines = reader.lines();
     while let Ok(Some(line)) = lines.next_line().await {
         let mut state = recorder.lock().await;
-        state.logs.push_back(format!("{}: {}", pipe_tag, line));
-        if state.logs.len() > 999 {
+        state.logs.push_back(format!("[{}] {}: {}", chrono::Utc::now().to_rfc3339(), pipe_tag, line));
+        if state.logs.len() > 997 {
             state.logs.pop_front();
         }
 
     }
     let mut state = recorder.lock().await;
-    state.logs.push_back(format!("{}: <closed>", pipe_tag));
+    state.logs.push_back(format!("[{}] {}: <closed>", chrono::Utc::now().to_rfc3339(), pipe_tag));
+    if responsible_for_exit {
+        state.running = false;
+        state.started_at = None;
+        state.logs.push_back(format!("[{}]: <exited>", chrono::Utc::now().to_rfc3339()));
+    }
 }
 
 #[actix_web::main]
@@ -97,21 +102,11 @@ async fn start_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) ->
         .expect("Failed to start recorder process");
 
     if let Some(stdout) = child.stdout.take() {
-        tokio::spawn(read_output(stdout, recorder_state.get_ref().clone(), "STDOUT"));
+        tokio::spawn(read_output(stdout, recorder_state.get_ref().clone(), "STDOUT", true));
     }
     if let Some(stderr) = child.stderr.take() {
-       tokio::spawn(read_output(stderr, recorder_state.get_ref().clone(), "STDERR"));
+       tokio::spawn(read_output(stderr, recorder_state.get_ref().clone(), "STDERR", false));
     }
-    let recorder_clone = recorder_state.clone();
-    tokio::spawn(async move {
-        let _ = child.wait().await;
-
-        let mut state = recorder_clone.lock().await;
-        state.logs.push_back("Process exited".to_string());
-        state.running = false;
-        state.process = None;
-        state.started_at = None;
-    });
     
     let mut state = recorder_state.lock().await;
     state.process = Some(child);
