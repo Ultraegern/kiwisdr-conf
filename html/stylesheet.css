@@ -204,6 +204,28 @@ a button {
   font-size: 0.9em;
   padding: 0.4em 0.8em;
 }
+.field select {
+  padding: 0.5em 0.8em;
+  font-size: 1.1em;
+  border: 2px solid var(--main-color-light);
+  border-radius: 8px;
+  background-color: var(--main-color-medium);
+  color: var(--text-color-bright);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field select:hover {
+  border-color: var(--accent-color);
+}
+.field select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 8px var(--accent-color-shadow);
+}
+.field input:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 @media (prefers-color-scheme: light) { /* Light theme (if system prefers light) */
     .background {
     background: linear-gradient(-45deg, #efa0ae, #d7b0be, #a0d1e5, #b0e5b7);

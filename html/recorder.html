@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KiwiRecorder</title>
-  <link rel="stylesheet" href="/stylesheet.css">
+  <link rel="stylesheet" href="stylesheet.css">
 </head>
 <body>
   <div class="background"></div>
@@ -12,9 +12,29 @@
     <h1>KiwiRecorder</h1>
     <p>Control and monitor your KiwiSDR recordings.</p>
 
-    <div>
-      <button id="startBtn" onclick="startRecording()">Start Recording</button>
-      <button id="stopBtn" onclick="stopRecording()">Stop Recording</button>
+    <div class="field-group">
+      <div class="field">
+        <label for="typeSelect">Type:</label>
+        <select id="typeSelect" onchange="handleTypeChange()">
+          <option value="png">PNG</option>
+          <option value="iq">IQ</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="freqInput">Frequency (kHz):</label>
+        <input id="freqInput" type="number" min="0" max="30000" step="0.001" value="20">
+      </div>
+
+      <div class="field" id="zoomField">
+        <label for="zoomInput">Zoom:</label>
+        <input id="zoomInput" type="number" min="0" max="14" step="1" value="11">
+      </div>
+
+      <div>
+        <button id="startBtn" onclick="startRecording()">Start Recording</button>
+        <button id="stopBtn" onclick="stopRecording()">Stop Recording</button>
+      </div>
     </div>
 
     <div id="messageBox" style="margin-top: 20px; font-weight: bold; color: var(--text-color-muted);"></div>
@@ -37,6 +57,12 @@
   <script>
     const API_BASE = "/api";
 
+    function handleTypeChange() {
+      const type = document.getElementById('typeSelect').value;
+      const zoomField = document.getElementById('zoomField');
+      zoomInput.disabled = (type !== 'png');
+    }
+
     async function getRecorderStatus() {
       try {
         const response = await fetch(`${API_BASE}/recorder/status`);
@@ -54,14 +80,14 @@
           document.getElementById('stopBtn').disabled = false;
         } else {
           statusEl.textContent = "Not Recording";
-          statusEl.style.color = "var(--text-color-muted);";
+          statusEl.style.color = "var(--text-color-muted)";
           document.getElementById('startBtn').disabled = false;
           document.getElementById('stopBtn').disabled = true;
         }
 
         if (data.started_at) {
           const date = new Date(data.started_at * 1000);
-          startedAtEl.textContent = `Started at: ${date.toLocaleString(undefined, { hour12: false })}`;;
+          startedAtEl.textContent = `Started at: ${date.toLocaleString(undefined, { hour12: false })}`;
         } else {
           startedAtEl.textContent = "Started at: --/--/--, --:--:--";
         }
@@ -85,8 +111,19 @@
     }
 
     async function startRecording() {
+      const rec_type = document.getElementById('typeSelect').value;
+      const freq = parseInt(document.getElementById('freqInput').value, 10);
+      const zoom = parseInt(document.getElementById('zoomInput').value, 10);
+
+      const body = { rec_type, frequency: freq };
+      if (rec_type === 'png') body.zoom = zoom;
+
       try {
-        const response = await fetch(`${API_BASE}/recorder/start`, { method: 'POST' });
+        const response = await fetch(`${API_BASE}/recorder/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
         const data = await response.json();
         document.getElementById('messageBox').textContent = data.message;
         await getRecorderStatus();

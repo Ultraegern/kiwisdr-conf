@@ -1,4 +1,5 @@
-use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use serde::Deserialize;
 use serde_json::json;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use std::collections::VecDeque;
@@ -6,6 +7,21 @@ use std::process::Stdio;
 use std::sync::Arc;
 use tokio::process::Child;
 use tokio::sync::Mutex;
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum RecordingType {
+    PNG,
+    IQ
+}
+
+#[derive(Deserialize)]
+struct RecorderSettings {
+    rec_type: RecordingType,
+    freq: u16,
+    #[serde(default)] // defaults to 0 if not provided
+    zoom: u8
+}
 
 struct RecorderState {
     running: bool,
@@ -98,7 +114,8 @@ async fn recorder_status(recorder_state: actix_web::web::Data<SharedRecorder>) -
 }
 
 #[post("/api/recorder/start")]
-async fn start_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) -> impl Responder {
+async fn start_recorder(settings_raw: web::Json<RecorderSettings>, recorder_state: actix_web::web::Data<SharedRecorder>) -> impl Responder {
+    let settings = settings_raw.into_inner();
     {
         let check_state = recorder_state.lock().await;
         let is_recorder_running = check_state.running;
@@ -113,18 +130,36 @@ async fn start_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) ->
             }));
         }
     }
+    
+    let args: Vec<String>  = match settings.rec_type {
+        RecordingType::PNG => vec![
+            "-s".to_string(), "127.0.0.1".to_string(),
+            "-p".to_string(), "8073".to_string(),
+            format!("--freq={}", settings.freq.to_string()),
+            "-d".to_string(), "/var/recorder/recorded-files/".to_string(),
+            "--filename=KiwiRecording".to_string(),
+            format!("--station={}", chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string()),
+
+            "--wf".to_string(), 
+            "--wf-png".to_string(), 
+            "--speed=4".to_string(), 
+            "--modulation=am".to_string(), 
+            format!("--zoom={}", settings.zoom.to_string())],
+        RecordingType::IQ => vec![
+            "-s".to_string(), "127.0.0.1".to_string(),
+            "-p".to_string(), "8073".to_string(),
+            format!("--freq={}", settings.freq.to_string()),
+            "-d".to_string(), "/var/recorder/recorded-files/".to_string(),
+            "--filename=KiwiRecording".to_string(),
+            format!("--station={}", chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string()),
+
+            "--kiwi-wav".to_string(), 
+            "--modulation=iq".to_string()]
+    };
 
     let mut child: Child = tokio::process::Command::new("python3")
         .arg("kiwirecorder.py")
-        .args([
-            "-s", "127.0.0.1",
-            "-p", "8073",
-            "-m", "iq",
-            "--kiwi-wav",
-            "-d", "/var/recorder/recorded-files/",
-            "--filename", "KiwiRecording",
-            "--station", &chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string(),
-        ])
+        .args(args)
         .current_dir("/usr/local/src/kiwiclient/")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
