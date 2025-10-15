@@ -18,7 +18,7 @@ enum RecordingType {
 #[derive(Deserialize)]
 struct RecorderSettings {
     rec_type: RecordingType,
-    freq: u16,
+    frequency: u16,
     #[serde(default)] // defaults to 0 if not provided
     zoom: u8
 }
@@ -135,7 +135,7 @@ async fn start_recorder(settings_raw: web::Json<RecorderSettings>, recorder_stat
         RecordingType::PNG => vec![
             "-s".to_string(), "127.0.0.1".to_string(),
             "-p".to_string(), "8073".to_string(),
-            format!("--freq={}", settings.freq.to_string()),
+            format!("--freq={}", settings.frequency.to_string()),
             "-d".to_string(), "/var/recorder/recorded-files/".to_string(),
             "--filename=KiwiRecording".to_string(),
             format!("--station={}", chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string()),
@@ -148,7 +148,7 @@ async fn start_recorder(settings_raw: web::Json<RecorderSettings>, recorder_stat
         RecordingType::IQ => vec![
             "-s".to_string(), "127.0.0.1".to_string(),
             "-p".to_string(), "8073".to_string(),
-            format!("--freq={}", settings.freq.to_string()),
+            format!("--freq={}", settings.frequency.to_string()),
             "-d".to_string(), "/var/recorder/recorded-files/".to_string(),
             "--filename=KiwiRecording".to_string(),
             format!("--station={}", chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string()),
