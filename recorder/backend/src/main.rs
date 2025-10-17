@@ -85,7 +85,7 @@ async fn status() -> impl Responder {
 
 #[get["/api/recorder/status"]]
 async fn recorder_status(recorder_state: actix_web::web::Data<SharedRecorder>) -> impl Responder {
-    const MAX_LOG_LENGTH: usize = 50;
+    const MAX_LOG_LENGTH: usize = 100;
 
     let state = recorder_state.lock().await;
     let is_recording = state.running;
