@@ -22,6 +22,11 @@
       </div>
 
       <div class="field">
+        <label for="autostopInput">Auto-stop (sec, 0 = infinite):</label>
+        <input id="autostopInput" type="number" min="0" step="1" value="0">
+      </div>
+
+      <div class="field">
         <label for="freqInput">Frequency (kHz):</label>
         <input id="freqInput" type="number" min="0" max="30000" step="0.001" value="20">
       </div>
@@ -113,10 +118,11 @@
     async function startRecording() {
       const rec_type = document.getElementById('typeSelect').value;
       const freq_khz = parseFloat(document.getElementById('freqInput').value);
-      const freq_hz = Math.round(freq_khz * 1000); // convert kHz → Hz, round to nearest integer
+      const freq_hz = Math.round(freq_khz * 1000); // kHz → Hz
       const zoom = parseInt(document.getElementById('zoomInput').value, 10);
+      const autostop = parseInt(document.getElementById('autostopInput').value, 10) || 0;
 
-      const body = { rec_type, frequency: freq_hz };
+      const body = { rec_type, frequency: freq_hz, autostop };
       if (rec_type === 'png') body.zoom = zoom;
 
       try {

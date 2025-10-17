@@ -20,7 +20,8 @@ struct RecorderSettings {
     rec_type: RecordingType,
     frequency: u32, // Hz
     #[serde(default)] // defaults to 0 if not provided
-    zoom: u8
+    zoom: u8,
+    autostop: u16 // Sec, O if infinite
 }
 
 struct RecorderState {
@@ -137,7 +138,7 @@ async fn start_recorder(settings_raw: web::Json<RecorderSettings>, recorder_stat
         }
     }
     
-    let args: Vec<String>  = match settings.rec_type {
+    let mut args: Vec<String>  = match settings.rec_type {
         RecordingType::PNG => vec![
             "-s".to_string(), "127.0.0.1".to_string(),
             "-p".to_string(), "8073".to_string(),
@@ -162,6 +163,10 @@ async fn start_recorder(settings_raw: web::Json<RecorderSettings>, recorder_stat
             "--kiwi-wav".to_string(), 
             "--modulation=iq".to_string()]
     };
+
+    if settings.autostop != 0 {
+        args.push(format!("--time-limit={}", settings.autostop));
+    }
 
     let mut child: Child = tokio::process::Command::new("python3")
         .arg("kiwirecorder.py")
