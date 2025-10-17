@@ -70,19 +70,22 @@
         // Populate the table
         const tbody = document.querySelector('#file-table tbody');
         files.forEach(file => {
-        const tr = document.createElement('tr');
-        const pad = n => n.toString().padStart(2, '0');
-        const d = file.date;
-        const formattedDate = `${pad(d.getHours())}:${pad(d.getMinutes())} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
+          const tr = document.createElement('tr');
+          const pad = n => n.toString().padStart(2, '0');
+          const d = file.date;
+          const formattedDate = `${pad(d.getHours())}:${pad(d.getMinutes())} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
 
-        tr.innerHTML = `
-          <td>${file.name}</td>
-          <td>${formattedDate}</td>
-          <td>${file.size}B</td>
-          <td><a href="${DOWNLOAD_URL + encodeURIComponent(file.name)}" target="_blank"><button>Download</button></a></td>
-        `;
+          tr.innerHTML = `
+            <td>${file.name}</td>
+            <td>${formattedDate}</td>
+            <td>${file.size}B</td>
+            <td>
+              <a href="${DOWNLOAD_URL + encodeURIComponent(file.name)}" target="_blank"><button>View</button></a>
+              <a href="${DOWNLOAD_URL + encodeURIComponent(file.name)}" download><button>Download</button></a>
+            </td>
+          `;
 
-        tbody.appendChild(tr);
+          tbody.appendChild(tr);
         });
 
       } catch (err) {
