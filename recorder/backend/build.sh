@@ -66,6 +66,7 @@ build_target() {
     local src="target/$target/release/backend"
     local dst="$BUILD_DIR/backend${suffix}"
     cp "$src" "$dst"
+    chmod +x "$dst"
     echo "✅ Built: $dst"
 }
 
