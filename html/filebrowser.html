@@ -30,6 +30,9 @@
 	<script>
 		const DOWNLOAD_URL = '/recorder/download/';
 
+    // List of file extensions that can be viewed in the browser
+	  const viewableExtensions = ['mp3', 'wav', 'ogg', 'mp4', 'webm', 'txt', 'html', 'jpg', 'jpeg', 'png', 'gif', 'svg', 'pdf'];
+    
 		async function fetchFileList() {
       try {
         const res = await fetch(DOWNLOAD_URL);
