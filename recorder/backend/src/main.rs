@@ -85,6 +85,8 @@ async fn status() -> impl Responder {
 
 #[get["/api/recorder/status"]]
 async fn recorder_status(recorder_state: actix_web::web::Data<SharedRecorder>) -> impl Responder {
+    const MAX_LOG_LENGTH: usize = 50;
+
     let state = recorder_state.lock().await;
     let is_recording = state.running;
     let started_at = state.started_at;
@@ -93,11 +95,15 @@ async fn recorder_status(recorder_state: actix_web::web::Data<SharedRecorder>) -
 
     let last_5_logs: Vec<String> = logs
         .iter()
-        .rev()               // start from the newest
-        .take(5)              // take last 5
-        .cloned()             // copy them out
-        .collect::<Vec<_>>()
-        .into_iter()
+        .rev() // start from the newest
+        .take(5)
+        .map(|log| {
+            if log.len() > MAX_LOG_LENGTH {
+                format!("{}...", &log[..MAX_LOG_LENGTH])
+            } else {
+                log.clone()
+            }
+        })
         .collect();
 
     let message: String = match is_recording {
