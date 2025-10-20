@@ -27,7 +27,7 @@
       </div>
 
       <div class="field">
-        <label for="freqInput">Frequency (kHz):</label>
+        <label for="freqInput">Center Frequency (kHz):</label>
         <input id="freqInput" type="number" min="0" max="30000" step="0.001" value="20">
       </div>
 
@@ -37,8 +37,12 @@
       </div>
 
       <div class="field">
-        <label>Bandwidth Info:</label>
-        <span id="bandwidthInfo">--</span>
+        <div id="bandwidthInfo">
+          <div id="bandwidthLine">Bandwidth: --</div>
+          <div id="minFreqLine">Min: --</div>
+          <div id="maxFreqLine">Max: --</div>
+          <div id="zoomWarning" style="color: var(--accent-color); font-weight: bold; display:none;">Invalid zoom! Max = 14</div>
+        </div>
       </div>
 
       <div>
@@ -68,29 +72,88 @@
     const API_BASE = "/api";
     const MIN_FREQ = 0;
     const MAX_FREQ = 30_000_000;
+    const MAX_ZOOM = 14;
 
     function updateBandwidthInfo() {
+      const type = document.getElementById('typeSelect').value;
+      const zoomInput = document.getElementById('zoomInput');
       const freqInput = parseFloat(document.getElementById('freqInput').value) * 1000; // kHz → Hz
-      const zoom = parseInt(document.getElementById('zoomInput').value, 10);
 
-      // Calculate bandwidth
-      let bandwidth = (MAX_FREQ - MIN_FREQ) / Math.pow(2, zoom);
+      const bandwidthField = document.getElementById('bandwidthField');
+      const bandwidthLine = document.getElementById('bandwidthLine');
+      const minFreqLine = document.getElementById('minFreqLine');
+      const maxFreqLine = document.getElementById('maxFreqLine');
+      const zoomWarning = document.getElementById('zoomWarning');
 
-      // Calculate min/max selection frequencies
-      let selection_freq_max = freqInput + bandwidth / 2;
-      let selection_freq_min = freqInput - bandwidth / 2;
+      // Disable field if type is not PNG
+      const isPNG = (type === 'png');
+      bandwidthField.disabled = !isPNG;
 
-      // Clamp to allowed limits
-      if (selection_freq_max > MAX_FREQ) selection_freq_max = MAX_FREQ;
-      if (selection_freq_min < MIN_FREQ) selection_freq_min = MIN_FREQ;
+      let messages = [];
+      let zoomInvalid = false;
 
-      // Convert back to kHz for display
+      const zoom = parseInt(zoomInput.value, 10);
+      if (isNaN(zoom)) {
+        messages.push("Zoom is not a number.");
+        zoomInvalid = true;
+      } else {
+        if (zoom < 0) {
+          messages.push(`Zoom is too low: ${zoom}. Minimum is 0.`);
+          zoomInvalid = true;
+        }
+        if (zoom > MAX_ZOOM) {
+          messages.push(`Zoom is too high: ${zoom}. Maximum is ${MAX_ZOOM}.`);
+          zoomInvalid = true;
+        }
+      }
+
+      let bandwidth = 0, selection_freq_min = 0, selection_freq_max = 0;
+      if (!zoomInvalid) {
+        bandwidth = (MAX_FREQ - MIN_FREQ) / Math.pow(2, zoom);
+        selection_freq_max = freqInput + bandwidth / 2;
+        selection_freq_min = freqInput - bandwidth / 2;
+
+        if (selection_freq_max > MAX_FREQ) {
+          messages.push(`Frequency range exceeds MAX_FREQ (${MAX_FREQ/1000} kHz). Selected max = ${(selection_freq_max/1000).toFixed(3)} kHz.`);
+          zoomInvalid = true;
+        }
+        if (selection_freq_min < MIN_FREQ) {
+          messages.push(`Frequency range below MIN_FREQ (${MIN_FREQ/1000} kHz). Selected min = ${(selection_freq_min/1000).toFixed(3)} kHz.`);
+          zoomInvalid = true;
+        }
+      }
+
+      // Show or hide zoom warning
+      if (zoomInvalid) {
+        zoomWarning.style.display = 'block';
+        zoomWarning.innerHTML = messages.join('<br>');
+        bandwidthLine.textContent = 'Bandwidth: --';
+        minFreqLine.textContent = 'Min: --';
+        maxFreqLine.textContent = 'Max: --';
+        return;
+      } else {
+        zoomWarning.style.display = 'none';
+      }
+
+      // Disable start button if there are errors
+      startBtn.disabled = zoomInvalid;
+
+
+      // If type not PNG, disable bandwidth display
+      if (!isPNG) {
+        bandwidthLine.textContent = 'Bandwidth: --';
+        minFreqLine.textContent = 'Min: --';
+        maxFreqLine.textContent = 'Max: --';
+        return;
+      }
+
+      bandwidth /= 1000;
       selection_freq_max /= 1000;
       selection_freq_min /= 1000;
-      bandwidth /= 1000;
 
-      document.getElementById('bandwidthInfo').textContent =
-        `Bandwidth: ${bandwidth.toFixed(3)} kHz, Min: ${selection_freq_min.toFixed(3)} kHz, Max: ${selection_freq_max.toFixed(3)} kHz`;
+      bandwidthLine.textContent = `Bandwidth: ${bandwidth.toFixed(3)} kHz`;
+      minFreqLine.textContent = `Min: ${selection_freq_min.toFixed(3)} kHz`;
+      maxFreqLine.textContent = `Max: ${selection_freq_max.toFixed(3)} kHz`;
     }
 
     function handleTypeChange() {
@@ -187,7 +250,7 @@
     // Update bandwidth info when freq or zoom changes
     document.getElementById('freqInput').addEventListener('input', updateBandwidthInfo);
     document.getElementById('zoomInput').addEventListener('input', updateBandwidthInfo);
-    // Initial display
+    document.getElementById('typeSelect').addEventListener('change', updateBandwidthInfo);
     updateBandwidthInfo();
   </script>
 </body>

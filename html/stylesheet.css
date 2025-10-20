@@ -221,9 +221,11 @@ a button {
   border-color: var(--accent-color);
   box-shadow: 0 0 8px var(--accent-color-shadow);
 }
-.field input:disabled {
-    cursor: not-allowed;
+:disabled {
     opacity: 0.6;
+}
+input:disabled {
+    cursor: not-allowed;
 }
 .button-group {
   display: flex;
