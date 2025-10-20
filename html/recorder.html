@@ -36,6 +36,11 @@
         <input id="zoomInput" type="number" min="0" max="14" step="1" value="11">
       </div>
 
+      <div class="field">
+        <label>Bandwidth Info:</label>
+        <span id="bandwidthInfo">--</span>
+      </div>
+
       <div>
         <button id="startBtn" onclick="startRecording()">Start Recording</button>
         <button id="stopBtn" onclick="stopRecording()">Stop Recording</button>
@@ -61,6 +66,32 @@
 
   <script>
     const API_BASE = "/api";
+    const MIN_FREQ = 0;
+    const MAX_FREQ = 30_000_000;
+
+    function updateBandwidthInfo() {
+      const freqInput = parseFloat(document.getElementById('freqInput').value) * 1000; // kHz → Hz
+      const zoom = parseInt(document.getElementById('zoomInput').value, 10);
+
+      // Calculate bandwidth
+      let bandwidth = (MAX_FREQ - MIN_FREQ) / Math.pow(2, zoom);
+
+      // Calculate min/max selection frequencies
+      let selection_freq_max = freqInput + bandwidth / 2;
+      let selection_freq_min = freqInput - bandwidth / 2;
+
+      // Clamp to allowed limits
+      if (selection_freq_max > MAX_FREQ) selection_freq_max = MAX_FREQ;
+      if (selection_freq_min < MIN_FREQ) selection_freq_min = MIN_FREQ;
+
+      // Convert back to kHz for display
+      selection_freq_max /= 1000;
+      selection_freq_min /= 1000;
+      bandwidth /= 1000;
+
+      document.getElementById('bandwidthInfo').textContent =
+        `Bandwidth: ${bandwidth.toFixed(3)} kHz, Min: ${selection_freq_min.toFixed(3)} kHz, Max: ${selection_freq_max.toFixed(3)} kHz`;
+    }
 
     function handleTypeChange() {
       const type = document.getElementById('typeSelect').value;
@@ -152,6 +183,12 @@
 
     getRecorderStatus();
     setInterval(getRecorderStatus, 1000);
+
+    // Update bandwidth info when freq or zoom changes
+    document.getElementById('freqInput').addEventListener('input', updateBandwidthInfo);
+    document.getElementById('zoomInput').addEventListener('input', updateBandwidthInfo);
+    // Initial display
+    updateBandwidthInfo();
   </script>
 </body>
 </html>
