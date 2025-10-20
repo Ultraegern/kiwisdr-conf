@@ -14,16 +14,16 @@
 	<div class="table-container">
 		<table id="file-table">
 			<thead>
-				<table-row>
-					<table-header-item>Filename</table-header-item>
-					<table-header-item>Date & Time (UTC)</table-header-item>
-					<table-header-item>Size</table-header-item>
-					<table-header-item>Download</table-header-item>
-				</table-row>
+				<tr>
+					<th>Filename</th>
+					<th>Date & Time (UTC)</th>
+					<th>Size</th>
+					<th>Download</th>
+				</tr>
 			</thead>
-			<table-body>
+			<tbody>
 			<!-- JS will inject rows here -->
-			</table-body>
+			</tbody>
 		</table>
 	</div>
 
@@ -41,7 +41,7 @@
 
         const pre = doc.querySelector('pre');
         if (!pre) {
-          document.getElementById('file-table').innerHTML = "<table-row><table-cell colspan='4'>No files found.</table-cell></table-row>";
+          document.getElementById('file-table').innerHTML = "<tr><td colspan='4'>No files found.</td></tr>";
           return;
         }
 
@@ -71,9 +71,9 @@
         files.sort((a, b) => b.date - a.date);
 
         // Populate the table
-        const table_body = document.querySelector('#file-table table-body');
+        const tbody = document.querySelector('#file-table tbody');
         files.forEach(file => {
-          const table_row = document.createElement('table-row');
+          const tr = document.createElement('tr');
           const pad = n => n.toString().padStart(2, '0');
           const d = file.date;
           const formattedDate = `${pad(d.getHours())}:${pad(d.getMinutes())} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
@@ -84,24 +84,24 @@
             ? `<a href="${DOWNLOAD_URL + encodeURIComponent(file.name)}" target="_blank"><button>View</button></a>`
             : '';
 
-          table_row.innerHTML = `
-            <table-cell>${file.name}</table-cell>
-            <table-cell>${formattedDate}</table-cell>
-            <table-cell>${file.size}B</table-cell>
-            <table-cell>
+          tr.innerHTML = `
+            <td>${file.name}</td>
+            <td>${formattedDate}</td>
+            <td>${file.size}B</td>
+            <td>
               <div class="button-group">
                 ${viewButton}
                 <a href="${DOWNLOAD_URL + encodeURIComponent(file.name)}" download><button>Download</button></a>
               </div>
-            </table-cell>
+            </td>
           `;
 
-          table_body.appendChild(table_row);
+          tbody.appendChild(tr);
         });
 
       } catch (err) {
         console.error('Error loading file list:', err);
-        document.querySelector('#file-table table-body').innerHTML = `<table-row><table-cell colspan="4">Error: ${err.message}</table-cell></table-row>`;
+        document.querySelector('#file-table tbody').innerHTML = `<tr><td colspan="4">Error: ${err.message}</td></tr>`;
       }
 		}
 
