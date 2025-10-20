@@ -1,12 +1,18 @@
 #!/bin/bash
 set -e
 
+# Check if --force was passed to the script
+FORCE=false
+if [[ "$1" == "--force" ]]; then
+    FORCE=true
+fi
+
 sign() {
     local file="$1"
     local sig="${file}.asc"
 
-    # If signature doesn't exist or file is newer, re-sign
-    if [[ ! -f "$sig" || "$file" -nt "$sig" ]]; then
+    # If signature doesn't exist or file is newer, or the --force argument is passed, re-sign
+    if [[ ! -f "$sig" || "$file" -nt "$sig" || "$FORCE" == true ]]; then
         gpg --batch --yes --armor --detach-sign --output "$sig" "$file"
         echo "✅ Signed $file"
     else
