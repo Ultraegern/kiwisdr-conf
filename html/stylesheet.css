@@ -188,7 +188,6 @@ th, td {
   text-align: left;
   border-bottom: 1px solid var(--main-color-light);
 }
-/* Remove border under last row */
 table tr:last-child td {
   border-bottom: none;
 }
