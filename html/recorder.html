@@ -61,9 +61,9 @@
     <div class="table-container" id="logsContainer" style="display:none;">
       <table>
         <thead>
-          <tr><th>Recent Logs</th></tr>
+          <table-row><table-header-item>Recent Logs</table-header-item></table-row>
         </thead>
-        <tbody id="logTableBody"></tbody>
+        <table-body id="logTableBody"></table-body>
       </table>
     </div>
   </div>
@@ -195,8 +195,8 @@
           logsContainer.style.display = "flex";
           logTableBody.innerHTML = "";
           for (const log of data.last_logs) {
-            const row = document.createElement("tr");
-            const cell = document.createElement("td");
+            const row = document.createElement("table-row");
+            const cell = document.createElement("table-cell");
             cell.textContent = log;
             row.appendChild(cell);
             logTableBody.appendChild(row);
