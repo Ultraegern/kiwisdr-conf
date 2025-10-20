@@ -227,9 +227,9 @@ a button {
 }
 .button-group {
   display: flex;
-  gap: 8px; /* space between buttons */
+  gap: 8px;
+  justify-content: flex-end;
 }
-
 @media (prefers-color-scheme: light) { /* Light theme (if system prefers light) */
     .background {
     background: linear-gradient(-45deg, #efa0ae, #d7b0be, #a0d1e5, #b0e5b7);

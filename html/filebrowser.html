@@ -85,6 +85,9 @@
             : '';
 
           tr.innerHTML = `
+            <td>${file.name}</td>
+            <td>${formattedDate}</td>
+            <td>${file.size}B</td>
             <td>
               <div class="button-group">
                 ${viewButton}
