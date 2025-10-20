@@ -137,6 +137,39 @@ async fn start_recorder(settings_raw: web::Json<RecorderSettings>, recorder_stat
             }));
         }
     }
+    {
+        if settings.zoom > 31 { // Prevent bitshifting a u32 by 32 bits
+            return HttpResponse::BadRequest().json(json!({ 
+                "message": "Zoom to high",
+                "recording": false,
+                "started_at": Option::<u64>::None
+            }));
+        }
+
+        const MIN_FREQ: u32 = 0;
+        const MAX_FREQ: u32 = 30_000_000;
+        let zoom = settings.zoom as u32;
+        let center_freq = settings.frequency;
+
+        let bandwidth = (MAX_FREQ - MIN_FREQ) / (1 << zoom); // "(1 << zoom)" bitshift is same as "(2^zoom)"
+        let selection_freq_max = center_freq.saturating_add(bandwidth / 2); // Saturating add/sub to avoid integer overflow
+        let selection_freq_min = center_freq.saturating_sub(bandwidth / 2);
+
+        if selection_freq_max > MAX_FREQ {
+            return HttpResponse::BadRequest().json(json!({ 
+                "message": "The selected frequency range exceeds the maximum frequency",
+                "recording": false,
+                "started_at": Option::<u64>::None
+            }));
+        }
+        if selection_freq_min < MIN_FREQ {
+            return HttpResponse::BadRequest().json(json!({ 
+                "message": "The selected frequency range exceeds the minimum frequency",
+                "recording": false,
+                "started_at": Option::<u64>::None
+            }));
+        }
+    }
     
     let mut args: Vec<String>  = match settings.rec_type {
         RecordingType::PNG => vec![
