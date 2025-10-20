@@ -79,7 +79,7 @@
       const zoomInput = document.getElementById('zoomInput');
       const freqInput = parseFloat(document.getElementById('freqInput').value) * 1000; // kHz → Hz
 
-      const bandwidthField = document.getElementById('bandwidthField');
+      
       const bandwidthLine = document.getElementById('bandwidthLine');
       const minFreqLine = document.getElementById('minFreqLine');
       const maxFreqLine = document.getElementById('maxFreqLine');
@@ -87,7 +87,6 @@
 
       // Disable field if type is not PNG
       const isPNG = (type === 'png');
-      bandwidthField.disabled = !isPNG;
 
       let messages = [];
       let zoomInvalid = false;
@@ -159,7 +158,9 @@
     function handleTypeChange() {
       const type = document.getElementById('typeSelect').value;
       const zoomField = document.getElementById('zoomField');
+      const bandwidthInfo = document.getElementById('bandwidthInfo');
       zoomInput.disabled = (type !== 'png');
+      bandwidthInfo.disabled = (type !== "png")
     }
 
     async function getRecorderStatus() {
