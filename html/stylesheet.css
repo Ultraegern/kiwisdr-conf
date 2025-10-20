@@ -183,20 +183,20 @@ table {
   border-radius: 8px;
   overflow: hidden;
 }
-th, td {
+table-header-item, table-cell {
   padding: 12px 16px;
   text-align: left;
   border-bottom: 1px solid var(--main-color-light);
 }
 /* Remove border under last row */
-table tr:last-child td {
+table table-row:last-child table-cell {
   border-bottom: none;
 }
-th {
+table-header-item {
   background-color: var(--main-color-dark);
   font-weight: 600;
 }
-tr:hover {
+table-row:hover {
   background-color: var(--main-color-medium-hover);
 }
 a button {
