@@ -106,18 +106,16 @@
         }
       }
 
-      let bandwidth = 0, selection_freq_min = 0, selection_freq_max = 0;
+      let bandwidth = (MAX_FREQ - MIN_FREQ) / Math.pow(2, zoom);
+      let selection_freq_max = freqInput + bandwidth / 2;
+      let selection_freq_min = freqInput - bandwidth / 2;
       if (!zoomInvalid) {
-        bandwidth = (MAX_FREQ - MIN_FREQ) / Math.pow(2, zoom);
-        selection_freq_max = freqInput + bandwidth / 2;
-        selection_freq_min = freqInput - bandwidth / 2;
-
         if (selection_freq_max > MAX_FREQ) {
-          messages.push(`Frequency range exceeds MAX_FREQ (${MAX_FREQ/1000} kHz). Selected max = ${(selection_freq_max/1000).toFixed(3)} kHz.`);
+          messages.push("Frequency range exceeds MAX_FREQ " + format_freq(MAX_FREQ)+ ". Selected max = " + format_freq(selection_freq_max));
           zoomInvalid = true;
         }
         if (selection_freq_min < MIN_FREQ) {
-          messages.push(`Frequency range below MIN_FREQ (${MIN_FREQ/1000} kHz). Selected min = ${(selection_freq_min/1000).toFixed(3)} kHz.`);
+          messages.push("Frequency range below MIN_FREQ " + format_freq(MIN_FREQ) + ". Selected min = " + format_freq(selection_freq_min));
           zoomInvalid = true;
         }
       }
@@ -147,9 +145,9 @@
       selection_freq_max /= 1000;
       selection_freq_min /= 1000;
 
-      bandwidthLine.textContent = `Bandwidth: ${bandwidth.toFixed(3)} kHz`;
-      minFreqLine.textContent = `Min: ${selection_freq_min.toFixed(3)} kHz`;
-      maxFreqLine.textContent = `Max: ${selection_freq_max.toFixed(3)} kHz`;
+      bandwidthLine.textContent = "Bandwidth: " + format_freq(bandwidth);
+      minFreqLine.textContent = "Min: " + format_freq(selection_freq_min);
+      maxFreqLine.textContent = "Max: " + format_freq(selection_freq_max);
     }
 
     function handleTypeChange() {
