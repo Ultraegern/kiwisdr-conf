@@ -165,12 +165,12 @@
 
     function format_freq(freq_hz) { // Int -> Str
       switch (true) {
-        case freq_hz < 1000:
+        case Math.abs(freq_hz) < 1000:
           return `${freq_hz} Hz`
-        case freq_hz >= 1000 && freq_hz < 1_000_000:
+        case Math.abs(freq_hz) >= 1000 && freq_hz < 1_000_000:
           let freq_khz = (freq_hz / 1000).toFixed(1)
           return `${freq_khz} kHz`
-        case freq_hz >= 1_000_000:
+        case Math.abs(freq_hz) >= 1_000_000:
           let freq_mhz = (freq_hz / 1_000_000).toFixed(1)
           return `${freq_mhz} MHz`
       }
