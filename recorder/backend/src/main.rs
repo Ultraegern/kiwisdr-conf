@@ -173,9 +173,9 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
         }
     }
     
-    let filename_common = format!("{}_Freq={}Hz", chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string(), settings.frequency.to_string());
-    let filename_png = format!("{}_Zoom={}", filename_common, settings.zoom.to_string());
-    let filename_iq = format!("{}_Bandwith=12kHz", filename_common);
+    let filename_common = format!("{}_Freq-{}Hz", chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string(), settings.frequency.to_string());
+    let filename_png = format!("{}_Zoom-{}", filename_common, settings.zoom.to_string());
+    let filename_iq = format!("{}_Bandwidth-12kHz", filename_common);
 
     let mut args: Vec<String>  = match settings.rec_type {
         RecordingType::PNG => vec![
