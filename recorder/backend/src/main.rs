@@ -19,7 +19,7 @@ enum RecordingType {
 struct RecorderSettings {
     rec_type: RecordingType,
     frequency: u32, // Hz
-    #[serde(default)] // defaults to 0 if not provided
+    #[serde(default)] // defaults zoom to 0 if not provided
     zoom: u8,
     autostop: u16 // Sec, O if infinite
 }
@@ -219,11 +219,14 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
        tokio::spawn(read_output(stderr, recorder_state.get_ref().clone(), "STDERR", false));
     }
     
+    let now = chrono::Utc::now();
+    let started_at = Some(now.timestamp() as u64);
+    let started_at_str = now.format("%Y/%m/%d %H:%M:%S UTC").to_string();
     let mut state = recorder_state.lock().await;
     state.process = Some(child);
     state.running = true;
-    state.started_at = Some(chrono::Utc::now().timestamp() as u64);
-    let started_at = state.started_at;
+    state.started_at = started_at;
+    state.logs.push_back(format!("[{}]: <Started>", started_at_str));
     drop(state);
     
 
