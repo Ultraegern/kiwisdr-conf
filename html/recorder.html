@@ -168,7 +168,7 @@
         case Math.abs(freq_hz) < 1000:
           let freq_hz_str = freq_hz.toFixed(0)
           return `${freq_hz_str} Hz`
-        case Math.abs(freq_hz) >= 1000 && Math.abs(freq_hz < 1_000_000):
+        case Math.abs(freq_hz) >= 1000 && Math.abs(freq_hz) < 1_000_000:
           let freq_khz = (freq_hz / 1000).toFixed(1)
           return `${freq_khz} kHz`
         case Math.abs(freq_hz) >= 1_000_000:
