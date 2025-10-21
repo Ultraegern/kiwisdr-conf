@@ -89,39 +89,42 @@
       const isPNG = (type === 'png');
 
       let messages = [];
-      let zoomInvalid = false;
+      let zoomInvalidNr = false;
 
       const zoom = parseInt(zoomInput.value, 10);
       if (isNaN(zoom)) {
         messages.push("Zoom is not a number.");
-        zoomInvalid = true;
+        zoomInvalidNr = true;
       } else {
         if (zoom < 0) {
           messages.push(`Zoom is too low: ${zoom}. Minimum is 0.`);
-          zoomInvalid = true;
+          zoomInvalidNr = true;
         }
         if (zoom > MAX_ZOOM) {
           messages.push(`Zoom is too high: ${zoom}. Maximum is ${MAX_ZOOM}.`);
-          zoomInvalid = true;
+          zoomInvalidNr = true;
         }
       }
 
-      let bandwidth = (MAX_FREQ - MIN_FREQ) / Math.pow(2, zoom);
-      let selection_freq_max = freqInput + bandwidth / 2;
-      let selection_freq_min = freqInput - bandwidth / 2;
-      if (!zoomInvalid) {
+      let frequencyRangeInvalid = false
+
+      let bandwidth = 0, selection_freq_min = 0, selection_freq_max = 0;
+      if (!zoomInvalidNr) {
+        bandwidth = (MAX_FREQ - MIN_FREQ) / Math.pow(2, zoom);
+        selection_freq_max = freqInput + bandwidth / 2;
+        selection_freq_min = freqInput - bandwidth / 2;
         if (selection_freq_max > MAX_FREQ) {
           messages.push("Frequency range exceeds MAX_FREQ " + format_freq(MAX_FREQ)+ ". Selected max = " + format_freq(selection_freq_max));
-          zoomInvalid = true;
+          frequencyRangeInvalid = true;
         }
         if (selection_freq_min < MIN_FREQ) {
           messages.push("Frequency range below MIN_FREQ " + format_freq(MIN_FREQ) + ". Selected min = " + format_freq(selection_freq_min));
-          zoomInvalid = true;
+          frequencyRangeInvalid = true;
         }
       }
 
       // Show or hide zoom warning
-      if (zoomInvalid) {
+      if (frequencyRangeInvalid || zoomInvalidNr) {
         zoomWarning.style.display = 'block';
         zoomWarning.innerHTML = messages.join('<br>');
         return;
@@ -130,25 +133,27 @@
       }
 
       // Disable start button if there are errors
-      startBtn.disabled = zoomInvalid;
+      if (zoomInvalidNr || frequencyRangeInvalid) {
+        startBtn.disabled = true
+      }
+      else {
+        startBtn.disabled = false
+      }
 
 
       // If type not PNG, disable bandwidth display
-      if (!isPNG) {
+      if (isPNG && !zoomInvalidNr) {
+        bandwidthLine.textContent = "Bandwidth: " + format_freq(bandwidth);
+        minFreqLine.textContent = "Min: " + format_freq(selection_freq_min);
+        maxFreqLine.textContent = "Max: " + format_freq(selection_freq_max);
+        
+      }
+      else {
         bandwidthLine.textContent = 'Bandwidth: --';
         minFreqLine.textContent = 'Min: --';
         maxFreqLine.textContent = 'Max: --';
-        return;
       }
-
-      bandwidth /= 1000;
-      selection_freq_max /= 1000;
-      selection_freq_min /= 1000;
-
-      bandwidthLine.textContent = "Bandwidth: " + format_freq(bandwidth);
-      minFreqLine.textContent = "Min: " + format_freq(selection_freq_min);
-      maxFreqLine.textContent = "Max: " + format_freq(selection_freq_max);
-    }
+     }
 
     function handleTypeChange() {
       const type = document.getElementById('typeSelect').value;
