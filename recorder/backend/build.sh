@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 
 HOST_ARCH=$(uname -m)
 echo "⬜ Host architecture: $HOST_ARCH"
@@ -58,6 +58,7 @@ get_suffix() {
 
 # Build function using cross
 build_target() {
+    cd "$DIR"
     local target=$1
     echo "⬜ Building for target: $target"
     cross build --release --target "$target"
