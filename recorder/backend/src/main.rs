@@ -173,6 +173,10 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
         }
     }
     
+    let filename_common = format!("{}_Freq={}Hz", chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string(), settings.frequency.to_string());
+    let filename_png = format!("{}_Zoom={}", filename_common, settings.zoom.to_string());
+    let filename_iq = format!("{}_Bandwith=12kHz", filename_common);
+
     let mut args: Vec<String>  = match settings.rec_type {
         RecordingType::PNG => vec![
             "-s".to_string(), "127.0.0.1".to_string(),
@@ -180,7 +184,7 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
             format!("--freq={:#.3}", (settings.frequency as f64 / 1000.0)),
             "-d".to_string(), "/var/recorder/recorded-files/".to_string(),
             "--filename=KiwiRecording".to_string(),
-            format!("--station={}", chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string()),
+            format!("--station={}", filename_png),
 
             "--wf".to_string(), 
             "--wf-png".to_string(), 
@@ -193,7 +197,7 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
             format!("--freq={:#.3}", (settings.frequency as f64 / 1000.0)),
             "-d".to_string(), "/var/recorder/recorded-files/".to_string(),
             "--filename=KiwiRecording".to_string(),
-            format!("--station={}", chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string()),
+            format!("--station={}", filename_iq),
 
             "--kiwi-wav".to_string(), 
             "--modulation=iq".to_string()]
