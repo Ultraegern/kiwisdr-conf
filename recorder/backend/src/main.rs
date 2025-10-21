@@ -32,6 +32,8 @@ struct RecorderState {
 }
 
 type SharedRecorder = Arc<Mutex<RecorderState>>;
+type ArtixSharedRecorder = actix_web::web::Data<SharedRecorder>;
+type ArtixRecorderSettings = web::Json<RecorderSettings>;
 
 async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRecorder, pipe_tag: &str, responsible_for_exit: bool) {
     let reader = BufReader::new(pipe);
@@ -85,7 +87,7 @@ async fn status() -> impl Responder {
 }
 
 #[get["/api/recorder/status"]]
-async fn recorder_status(recorder_state: actix_web::web::Data<SharedRecorder>) -> impl Responder {
+async fn recorder_status(recorder_state: ArtixSharedRecorder) -> impl Responder {
     const MAX_LOG_LENGTH: usize = 100;
 
     let state = recorder_state.lock().await;
@@ -121,15 +123,15 @@ async fn recorder_status(recorder_state: actix_web::web::Data<SharedRecorder>) -
 }
 
 #[post("/api/recorder/start")]
-async fn start_recorder(settings_raw: web::Json<RecorderSettings>, recorder_state: actix_web::web::Data<SharedRecorder>) -> impl Responder {
+async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: ArtixSharedRecorder) -> impl Responder {
     let settings = settings_raw.into_inner();
-    {
+    { // Exit if already running
         let check_state = recorder_state.lock().await;
         let is_recorder_running = check_state.running;
         let recorder_start_time = check_state.started_at;
         drop(check_state);
 
-        if is_recorder_running{ // Exit if already running
+        if is_recorder_running{
             return HttpResponse::BadRequest().json(json!({ 
                 "message": "Recorder is already running",
                 "recording": true,
@@ -137,7 +139,7 @@ async fn start_recorder(settings_raw: web::Json<RecorderSettings>, recorder_stat
             }));
         }
     }
-    {
+    { // Check that zoom and freq are valid
         if settings.zoom > 31 { // Prevent bitshifting a u32 by 32 bits
             return HttpResponse::BadRequest().json(json!({ 
                 "message": "Zoom to high",
@@ -233,7 +235,7 @@ async fn start_recorder(settings_raw: web::Json<RecorderSettings>, recorder_stat
 }
 
 #[post("/api/recorder/stop")]
-async fn stop_recorder(recorder_state: actix_web::web::Data<SharedRecorder>) -> impl Responder {
+async fn stop_recorder(recorder_state: ArtixSharedRecorder) -> impl Responder {
     {
         let check_state = recorder_state.lock().await;
         let is_recorder_running: bool = check_state.running;
