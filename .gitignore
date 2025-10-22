@@ -1,2 +1,3 @@
 recorder/backend/target
 recorder/backend/Cargo.lock
+/node_modules

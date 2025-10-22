@@ -26,7 +26,9 @@ sign cert/renew-cert.sh
 
 sign html/502.html
 sign html/recorder.html
+sign html/recorder.js
 sign html/filebrowser.html
+sign html/filebrowser.js
 sign html/help.html
 sign html/stylesheet.css
 

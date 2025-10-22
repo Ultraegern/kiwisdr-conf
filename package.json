@@ -1,0 +1,25 @@
+{
+  "name": "kiwisdr-conf",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ultraegern/kiwisdr-conf.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ultraegern/kiwisdr-conf/issues"
+  },
+  "homepage": "https://github.com/Ultraegern/kiwisdr-conf#readme",
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
