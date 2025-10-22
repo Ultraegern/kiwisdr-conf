@@ -84,22 +84,17 @@
       const minFreqLine = document.getElementById('minFreqLine');
       const maxFreqLine = document.getElementById('maxFreqLine');
       const zoomWarning = document.getElementById('zoomWarning');
+      const startBtn = document.getElementById('startBtn');
 
-      const { bandwidth, selection_freq_min, selection_freq_max, freq_range_invalid, zoom_invalid, error_messages } = calcFreqRage(freqInput, zoom, type)
+      const { bandwidth, selection_freq_min, selection_freq_max, freq_range_invalid, zoom_invalid, error_messages } = calcFreqRange(freqInput, zoom, type)
       
-      if (error_messages.length() > 0) {
+      if (error_messages.length > 0) {
         zoomWarning.style.display = 'block';
-        zoomWarning.innerHTML = error_messages.join('<br>');
+        zoomWarning.innerHTML = error_messages.join('<br><br>');
+        startBtn.disabled = true
       } else {
         zoomWarning.style.display = 'none';
-      }
-
-      // Disable start button if there are errors
-      if (error_messages.length() > 0) {
-        startBtn.disabled = true
-      }
-      else {
-        startBtn.disabled = false
+        startBtn.disabled = false;
       }
 
       if (!zoom_invalid) {
@@ -115,10 +110,20 @@
       }
     }
 
+    function isNrValid(nr, nr_name) {
+      let nr_valid = true, nr_error_messages = [];
+      if (isNaN(nr)) {
+        nr_error_messages.push(nr_name + " is not a number.");
+        nr_valid = false;
+      } 
+      return { nr_valid: nr_valid, nr_error_messages: nr_error_messages };
+    }
+
     function isZoomValid(zoom) {
       let zoom_valid = true, zoom_error_messages = [];
-      if (isNaN(zoom)) {
-        zoom_error_messages.push("Zoom is not a number.");
+      const { nr_valid, nr_error_messages } = isNrValid(zoom, "Zoom")
+      zoom_error_messages.push(...nr_error_messages)
+      if (!nr_valid) {
         zoom_valid = false;
       } 
       else {
@@ -134,8 +139,14 @@
       return {zoom_valid: zoom_valid, zoom_error_messages: zoom_error_messages};
     }
 
-    function calcFreqRage(center_freq_hz, zoom, mode) { // Int, Int, Str => Band: Int, Min: Int, Max: Int, Invalid: bool, error: []
+    function calcFreqRange(center_freq_hz, zoom, mode) { // Int, Int, Str => Band: Int, Min: Int, Max: Int, Invalid: bool, error: []
       let bandwidth = 0, selection_freq_min = 0, selection_freq_max = 0, freq_range_invalid = false, zoom_invalid = false, error_messages = [];
+
+      const { nr_valid, nr_error_messages } = isNrValid(center_freq_hz, "Frequency")
+      error_messages.push(...nr_error_messages)
+      if (!nr_valid) {
+        return { bandwidth: null, selection_freq_min: null, selection_freq_max: null, freq_range_invalid: null, zoom_invalid: false, error_messages: error_messages };
+      }
 
       if (mode == "png") {
         const {zoom_valid, zoom_error_messages} = isZoomValid(zoom);
@@ -148,6 +159,10 @@
       }
       else if (mode == "iq") {
         bandwidth = 12_000
+      }
+      else {
+        error_messages.push(`Invalid type: ${mode}`)
+        return { bandwidth: null, selection_freq_min: null, selection_freq_max: null, freq_range_invalid: null, zoom_invalid: false, error_messages: error_messages };
       }
 
       selection_freq_max = center_freq_hz + bandwidth / 2;
