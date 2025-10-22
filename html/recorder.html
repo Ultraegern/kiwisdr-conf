@@ -77,72 +77,32 @@
     function updateBandwidthInfo() {
       const type = document.getElementById('typeSelect').value;
       const zoomInput = document.getElementById('zoomInput');
+      const zoom = parseInt(zoomInput.value, 10);
       const freqInput = parseFloat(document.getElementById('freqInput').value) * 1000; // kHz → Hz
-
       
       const bandwidthLine = document.getElementById('bandwidthLine');
       const minFreqLine = document.getElementById('minFreqLine');
       const maxFreqLine = document.getElementById('maxFreqLine');
       const zoomWarning = document.getElementById('zoomWarning');
 
-      // Disable field if type is not PNG
-      const isPNG = (type === 'png');
-
-      let messages = [];
-      let zoomInvalidNr = false;
-
-      const zoom = parseInt(zoomInput.value, 10);
-      if (isNaN(zoom)) {
-        messages.push("Zoom is not a number.");
-        zoomInvalidNr = true;
-      } else {
-        if (zoom < 0) {
-          messages.push(`Zoom is too low: ${zoom}. Minimum is 0.`);
-          zoomInvalidNr = true;
-        }
-        if (zoom > MAX_ZOOM) {
-          messages.push(`Zoom is too high: ${zoom}. Maximum is ${MAX_ZOOM}.`);
-          zoomInvalidNr = true;
-        }
-      }
-
-      let frequencyRangeInvalid = false
-
-      let bandwidth = 0, selection_freq_min = 0, selection_freq_max = 0;
-      if (!zoomInvalidNr) {
-        bandwidth = (MAX_FREQ - MIN_FREQ) / Math.pow(2, zoom);
-        selection_freq_max = freqInput + bandwidth / 2;
-        selection_freq_min = freqInput - bandwidth / 2;
-        if (selection_freq_max > MAX_FREQ) {
-          messages.push("Frequency range exceeds MAX_FREQ " + format_freq(MAX_FREQ)+ ". Selected max = " + format_freq(selection_freq_max));
-          frequencyRangeInvalid = true;
-        }
-        if (selection_freq_min < MIN_FREQ) {
-          messages.push("Frequency range below MIN_FREQ " + format_freq(MIN_FREQ) + ". Selected min = " + format_freq(selection_freq_min));
-          frequencyRangeInvalid = true;
-        }
-      }
-
-      // Show or hide zoom warning
-      if (frequencyRangeInvalid || zoomInvalidNr) {
+      const { bandwidth, selection_freq_min, selection_freq_max, freq_range_invalid, zoom_invalid, error_messages } = calcFreqRage(freqInput, zoom, type)
+      
+      if (error_messages.length() > 0) {
         zoomWarning.style.display = 'block';
-        zoomWarning.innerHTML = messages.join('<br>');
-        return;
+        zoomWarning.innerHTML = error_messages.join('<br>');
       } else {
         zoomWarning.style.display = 'none';
       }
 
       // Disable start button if there are errors
-      if (zoomInvalidNr || frequencyRangeInvalid) {
+      if (error_messages.length() > 0) {
         startBtn.disabled = true
       }
       else {
         startBtn.disabled = false
       }
 
-
-      // If type not PNG, disable bandwidth display
-      if (isPNG && !zoomInvalidNr) {
+      if (!zoom_invalid) {
         bandwidthLine.textContent = "Bandwidth: " + format_freq(bandwidth);
         minFreqLine.textContent = "Min: " + format_freq(selection_freq_min);
         maxFreqLine.textContent = "Max: " + format_freq(selection_freq_max);
@@ -153,7 +113,57 @@
         minFreqLine.textContent = 'Min: --';
         maxFreqLine.textContent = 'Max: --';
       }
-     }
+    }
+
+    function isZoomValid(zoom) {
+      let zoom_valid = true, zoom_error_messages = [];
+      if (isNaN(zoom)) {
+        zoom_error_messages.push("Zoom is not a number.");
+        zoom_valid = false;
+      } 
+      else {
+        if (zoom < 0) {
+          zoom_error_messages.push(`Zoom is too low: ${zoom}. Minimum is 0.`);
+          zoom_valid = false;
+        }
+        else if (zoom > MAX_ZOOM) {
+          zoom_error_messages.push(`Zoom is too high: ${zoom}. Maximum is ${MAX_ZOOM}.`);
+          zoom_valid = false;
+        }
+      }
+      return {zoom_valid: zoom_valid, zoom_error_messages: zoom_error_messages};
+    }
+
+    function calcFreqRage(center_freq_hz, zoom, mode) { // Int, Int, Str => Band: Int, Min: Int, Max: Int, Invalid: bool, error: []
+      let bandwidth = 0, selection_freq_min = 0, selection_freq_max = 0, freq_range_invalid = false, zoom_invalid = false, error_messages = [];
+
+      if (mode == "png") {
+        const {zoom_valid, zoom_error_messages} = isZoomValid(zoom);
+        error_messages.push(...zoom_error_messages);
+        if (!zoom_valid) {
+          return { bandwidth: null, selection_freq_min: null, selection_freq_max: null, freq_range_invalid: null, zoom_invalid: true, error_messages: error_messages };
+        }
+
+        bandwidth = (MAX_FREQ - MIN_FREQ) / Math.pow(2, zoom);
+      }
+      else if (mode == "iq") {
+        bandwidth = 12_000
+      }
+
+      selection_freq_max = center_freq_hz + bandwidth / 2;
+      selection_freq_min = center_freq_hz - bandwidth / 2;
+
+      if (selection_freq_max > MAX_FREQ) {
+        error_messages.push("Frequency range exceeds MAX_FREQ " + format_freq(MAX_FREQ)+ ". Selected max = " + format_freq(selection_freq_max));
+        freq_range_invalid = true;
+      }
+      if (selection_freq_min < MIN_FREQ) {
+        error_messages.push("Frequency range below MIN_FREQ " + format_freq(MIN_FREQ) + ". Selected min = " + format_freq(selection_freq_min));
+        freq_range_invalid = true;
+      }
+
+      return { bandwidth: bandwidth, selection_freq_min: selection_freq_min, selection_freq_max: selection_freq_max, freq_range_invalid: freq_range_invalid, zoom_invalid: false, error_messages: error_messages };
+    }
 
     function handleTypeChange() {
       const type = document.getElementById('typeSelect').value;
