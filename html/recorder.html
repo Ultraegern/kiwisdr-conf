@@ -73,6 +73,7 @@
     const MIN_FREQ = 0;
     const MAX_FREQ = 30_000_000;
     const MAX_ZOOM = 14;
+    let is_recording = false, start_error = false
 
     function updateBandwidthInfo() {
       const type = document.getElementById('typeSelect').value;
@@ -91,10 +92,12 @@
       if (error_messages.length > 0) {
         zoomWarning.style.display = 'block';
         zoomWarning.innerHTML = error_messages.join('<br><br>');
-        startBtn.disabled = true
+        start_error = true
+        startBtn.disabled = is_recording || start_error;
       } else {
         zoomWarning.style.display = 'none';
-        startBtn.disabled = false;
+        start_error = false
+        startBtn.disabled = is_recording || start_error;
       }
 
       if (!zoom_invalid) {
@@ -212,15 +215,16 @@
         const logsContainer = document.getElementById('logsContainer');
         const logTableBody = document.getElementById('logTableBody');
 
+        is_recording = data.recording
         if (data.recording) {
           statusEl.textContent = "Recording";
           statusEl.style.color = "var(--accent-color)";
-          document.getElementById('startBtn').disabled = true;
+          document.getElementById('startBtn').disabled = is_recording || start_error;
           document.getElementById('stopBtn').disabled = false;
         } else {
           statusEl.textContent = "Not Recording";
           statusEl.style.color = "var(--text-color-muted)";
-          document.getElementById('startBtn').disabled = false;
+          document.getElementById('startBtn').disabled = is_recording || start_error;
           document.getElementById('stopBtn').disabled = true;
         }
 
