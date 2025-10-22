@@ -1,4 +1,4 @@
-npx tsc
+npm run build
 
 ./sign.sh
 
