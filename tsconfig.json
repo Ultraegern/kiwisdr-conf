@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    // File locations
+    "rootDir": "./typescript_src",
+    "outDir": "./html",
+
+    // Output JavaScript
+    "target": "es2024",      // modern JS features
+    "module": "esnext",      // ES modules for browser
+
+    // Strict type checking
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // Debugging
+    "sourceMap": true
+  },
+  "include": ["typescript_src/**/*"]
+}
