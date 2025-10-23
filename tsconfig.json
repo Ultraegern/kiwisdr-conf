@@ -10,15 +10,18 @@
 
     // Strict type checking
     "strict": true,
-    "noUncheckedIndexedAccess": true,
+    "alwaysStrict": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
     "exactOptionalPropertyTypes": true,
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-
-    // Debugging
-    "sourceMap": true
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "include": ["typescript_src/**/*"]
 }

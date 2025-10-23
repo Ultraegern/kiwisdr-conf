@@ -203,4 +203,3 @@ document.getElementById('freqInput').addEventListener('input', updateBandwidthIn
 document.getElementById('zoomInput').addEventListener('input', updateBandwidthInfo);
 document.getElementById('typeSelect').addEventListener('change', updateBandwidthInfo);
 updateBandwidthInfo();
-//# sourceMappingURL=recorder.js.map

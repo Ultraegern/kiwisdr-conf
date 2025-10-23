@@ -72,4 +72,3 @@ async function fetchFileList() {
     }
 }
 fetchFileList();
-//# sourceMappingURL=filebrowser.js.map
