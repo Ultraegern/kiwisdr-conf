@@ -199,7 +199,7 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
             "-p".to_string(), "8073".to_string(),
             format!("--freq={:#.3}", (settings.frequency as f64 / 1000.0)),
             "-d".to_string(), "/var/recorder/recorded-files/".to_string(),
-            "--filename=KiwiRecording".to_string(),
+            "--filename=KiwiRec".to_string(),
             format!("--station={}", filename_png),
 
             "--wf".to_string(), 
@@ -212,7 +212,7 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
             "-p".to_string(), "8073".to_string(),
             format!("--freq={:#.3}", (settings.frequency as f64 / 1000.0)),
             "-d".to_string(), "/var/recorder/recorded-files/".to_string(),
-            "--filename=KiwiRecording".to_string(),
+            "--filename=KiwiRec".to_string(),
             format!("--station={}", filename_iq),
 
             "--kiwi-wav".to_string(), 
