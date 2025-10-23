@@ -3,7 +3,7 @@ This repository installs and configues:
 * Nginx as a TLS endpoint, webserver for static files, and a proxy for everything else
 * KiwiClient as a tool for recording from the Kiwi
 * Rust + Actix Web as a webserver for exposing KiwiClient as a REST api
-* Html + CCS + Typescript as a web based frontend to KiwiClient
+* Html + CSS + Typescript as a web based frontend to KiwiClient
 ### Compatability
 Oficial KiwiSDR firmware .img files are [here](http://kiwisdr.com/quickstart/index.html#id-dload).  
 This repo is known to work with
