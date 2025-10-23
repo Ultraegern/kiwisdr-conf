@@ -88,7 +88,8 @@ async fn status() -> impl Responder {
 
 #[get["/api/recorder/status"]]
 async fn recorder_status(recorder_state: ArtixSharedRecorder) -> impl Responder {
-    const MAX_LOG_LENGTH: usize = 100;
+    const MAX_LOG_LENGTH: usize = 200;
+    const LOG_COUNT: usize = 10;
 
     let state = recorder_state.lock().await;
     let is_recording = state.running;
@@ -96,10 +97,10 @@ async fn recorder_status(recorder_state: ArtixSharedRecorder) -> impl Responder 
     let logs = state.logs.clone();
     drop(state);
 
-    let last_5_logs: Vec<String> = logs
+    let last_logs: Vec<String> = logs
         .iter()
         .rev() // start from the newest
-        .take(5)
+        .take(LOG_COUNT)
         .map(|log| {
             if log.len() > MAX_LOG_LENGTH {
                 format!("{}...", &log[..MAX_LOG_LENGTH])
@@ -118,7 +119,7 @@ async fn recorder_status(recorder_state: ArtixSharedRecorder) -> impl Responder 
         "message": message,
         "recording": is_recording,
         "started_at": started_at,
-        "last_logs": last_5_logs
+        "last_logs": last_logs
     }))
 }
 
