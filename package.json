@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "minify": "mkdir -p html && for f in typescript_dist/*.js; do npx terser \"$f\" --compress passes=2,toplevel=true --mangle toplevel=true -o \"html/$(basename \"$f\")\"; done",
+    "release": "npm run build && npm run minify"
   },
   "repository": {
     "type": "git",
@@ -20,6 +22,7 @@
   },
   "homepage": "https://github.com/Ultraegern/kiwisdr-conf#readme",
   "devDependencies": {
+    "terser": "^5.44.0",
     "typescript": "^5.9.3"
   }
 }
