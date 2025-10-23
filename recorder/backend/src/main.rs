@@ -50,7 +50,7 @@ impl fmt::Display for RecorderSettings {
             self.rec_type,
             self.frequency,
             match self.rec_type {
-                RecordingType::PNG => format!("Zoom: {}", self.zoom),
+                RecordingType::PNG => format!("Zoom: {} ", self.zoom),
                 RecordingType::IQ => "".to_string()
             },
             if self.autostop == 0 { String::from("Off") } else { format!("{} sec", self.autostop.to_string()) }
