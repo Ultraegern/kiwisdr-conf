@@ -227,3 +227,4 @@ setInterval(getRecorderStatus, 1000);
 updateBandwidthInfo();
 (window as any).startRecording = startRecording;
 (window as any).stopRecording = stopRecording;
+(window as any).handleTypeChange = handleTypeChange;
