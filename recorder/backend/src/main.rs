@@ -54,6 +54,21 @@ async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRe
     }
 }
 
+fn to_scientific(num: u32) -> String {
+    if num == 0{
+        return "0e0".to_string();
+    }
+    let exponent = (num as f64).log10().floor() as u32;
+    let mantissa = num as f64 / 10f64.powi(exponent as i32);
+    
+    let mantissa_str = format!("{:.3}", mantissa)
+        .trim_end_matches('0')
+        .trim_end_matches('.')
+        .replace('.', "d");
+
+    return format!("{}e{}", mantissa_str, exponent);
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let port: u16 = 5004;
@@ -174,9 +189,9 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
         }
     }
     
-    let filename_common = format!("{}_Freq-{}Hz", chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string(), settings.frequency.to_string());
-    let filename_png = format!("{}_Zoom-{}", filename_common, settings.zoom.to_string());
-    let filename_iq = format!("{}_Bandwidth-12kHz", filename_common);
+    let filename_common = format!("{}_Fq{}", chrono::Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string(), to_scientific(settings.frequency));
+    let filename_png = format!("{}_Zm{}", filename_common, settings.zoom.to_string());
+    let filename_iq = format!("{}_Bw1d2e4", filename_common);
 
     let mut args: Vec<String>  = match settings.rec_type {
         RecordingType::PNG => vec![
