@@ -241,12 +241,12 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
     
     let now = chrono::Utc::now();
     let started_at = Some(now.timestamp() as u64);
-    let started_at_str = now.format("%Y/%m/%d %H:%M:%S UTC").to_string();
+    let started_at_str = format!("[{}]: <Started>", now.format("%Y/%m/%d %H:%M:%S UTC"));
     let mut state = recorder_state.lock().await;
     state.process = Some(child);
     state.running = true;
     state.started_at = started_at;
-    state.logs.push_back(format!("[{}]: <Started>", started_at_str));
+    state.logs.push_back(started_at_str);
     drop(state);
     
 
