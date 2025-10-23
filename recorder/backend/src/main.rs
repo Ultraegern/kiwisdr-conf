@@ -1,5 +1,5 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use serde_json::json;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use std::collections::VecDeque;
@@ -8,6 +8,14 @@ use std::sync::Arc;
 use std::fmt;
 use tokio::process::Child;
 use tokio::sync::Mutex;
+
+#[derive(Clone, Serialize, Deserialize)]
+struct Log {
+    timestamp: u64, // Unix
+    data: String
+}
+
+type Logs = VecDeque<Log>;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -38,32 +46,39 @@ impl fmt::Display for RecorderSettings {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Type: {}, Frequency: {} Hz, Zoom: {}, Autostop: {}",
+            "Type: {}, Frequency: {} Hz, {}Autostop: {}",
             self.rec_type,
             self.frequency,
-            self.zoom,
+            match self.rec_type {
+                RecordingType::PNG => format!("Zoom: {}", self.zoom),
+                RecordingType::IQ => "".to_string()
+            },
             if self.autostop == 0 { String::from("Off") } else { format!("{} sec", self.autostop.to_string()) }
         )
     }
 }
 
+type ArtixRecorderSettings = web::Json<RecorderSettings>;
+
 struct RecorderState {
     running: bool,
     process: Option<Child>,
     started_at: Option<u64>,
-    logs: VecDeque<String>,
+    logs: Logs
 }
 
 type SharedRecorder = Arc<Mutex<RecorderState>>;
 type ArtixSharedRecorder = actix_web::web::Data<SharedRecorder>;
-type ArtixRecorderSettings = web::Json<RecorderSettings>;
 
 async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRecorder, pipe_tag: &str, responsible_for_exit: bool) {
     let reader = BufReader::new(pipe);
     let mut lines = reader.lines();
     while let Ok(Some(line)) = lines.next_line().await {
         let mut state = recorder.lock().await;
-        state.logs.push_back(format!("[{}] {}: {}", chrono::Utc::now().format("%Y/%m/%d %H:%M:%S UTC").to_string(), pipe_tag, line));
+        state.logs.push_back(Log {
+            timestamp: chrono::Utc::now().timestamp() as u64, 
+            data: format!("<{}> {}", pipe_tag, line)
+        });
         if state.logs.len() > 997 {
             state.logs.pop_front();
         }
@@ -73,7 +88,10 @@ async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRe
         let mut state = recorder.lock().await;
         state.running = false;
         state.started_at = None;
-        state.logs.push_back(format!("[{}]: <Exited>", chrono::Utc::now().format("%Y/%m/%d %H:%M:%S UTC").to_string()));
+        state.logs.push_back(Log {
+            timestamp: chrono::Utc::now().timestamp() as u64, 
+            data: "<Exited>".to_string()
+        });
     }
 }
 
@@ -135,15 +153,20 @@ async fn recorder_status(recorder_state: ArtixSharedRecorder) -> impl Responder 
     let logs = state.logs.clone();
     drop(state);
 
-    let last_logs: Vec<String> = logs
+    let last_logs: Vec<Log> = logs
         .iter()
         .rev() // start from the newest
         .take(LOG_COUNT)
         .map(|log| {
-            if log.len() > MAX_LOG_LENGTH {
-                format!("{}...", &log[..MAX_LOG_LENGTH])
+            let truncated_data = if log.data.len() > MAX_LOG_LENGTH {
+                format!("{}...", &log.data[..MAX_LOG_LENGTH])
             } else {
-                log.clone()
+                log.data.clone()
+            };
+
+            Log {
+                timestamp: log.timestamp,
+                data: truncated_data,
             }
         })
         .collect();
@@ -262,23 +285,28 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
        tokio::spawn(read_output(stderr, recorder_state.get_ref().clone(), "STDERR", false));
     }
     
-    let now = chrono::Utc::now();
-    let started_at = Some(now.timestamp() as u64);
-    let started_at_str = format!("[{}]: <Started>", now.format("%Y/%m/%d %H:%M:%S UTC"));
-    let started_settings_string = format!("<Settings>  {}", settings);
+    let now = chrono::Utc::now().timestamp() as u64;
+    let started_at_log = Log {
+        timestamp: now,
+        data: "<Started>".to_string()
+    };
+    let started_settings_log = Log {
+        timestamp: now,
+        data: format!("<Settings>  {}", settings)
+    };
     let mut state = recorder_state.lock().await;
     state.process = Some(child);
     state.running = true;
-    state.started_at = started_at;
-    state.logs.push_back(started_at_str);
-    state.logs.push_back(started_settings_string);
+    state.started_at = Some(now);
+    state.logs.push_back(started_at_log);
+    state.logs.push_back(started_settings_log);
     drop(state);
     
 
     return HttpResponse::Ok().json(json!({ 
         "message": "Recorder started successfully",
         "recording": true,
-        "started_at": started_at
+        "started_at": Some(now)
     }))
 }
 
@@ -311,7 +339,10 @@ async fn stop_recorder(recorder_state: ArtixSharedRecorder) -> impl Responder {
 
     let mut state = recorder_state.lock().await;
     state.process = None;
-    state.logs.push_back(format!("[{}]: <Stoped Manualy>", chrono::Utc::now().format("%Y/%m/%d %H:%M:%S UTC").to_string()));
+    state.logs.push_back(Log {
+        timestamp: chrono::Utc::now().timestamp() as u64,
+        data: "<Stoped Manualy>".to_string()
+    });
     drop(state);
 
     return HttpResponse::Ok().json(json!({ 
