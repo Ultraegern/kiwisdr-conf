@@ -225,3 +225,5 @@ setInterval(getRecorderStatus, 1000);
 (document.getElementById('zoomInput')! as HTMLInputElement).addEventListener('input', updateBandwidthInfo);
 (document.getElementById('typeSelect')! as HTMLSelectElement).addEventListener('change', updateBandwidthInfo);
 updateBandwidthInfo();
+(window as any).startRecording = startRecording;
+(window as any).stopRecording = stopRecording;
