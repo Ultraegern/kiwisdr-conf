@@ -5,6 +5,7 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use std::collections::VecDeque;
 use std::process::Stdio;
 use std::sync::Arc;
+use std::fmt;
 use tokio::process::Child;
 use tokio::sync::Mutex;
 
@@ -15,13 +16,35 @@ enum RecordingType {
     IQ
 }
 
+impl fmt::Display for RecordingType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RecordingType::PNG => write!(f, "Png"),
+            RecordingType::IQ => write!(f, "Iq"),
+        }
+    }
+}
+
 #[derive(Deserialize)]
 struct RecorderSettings {
     rec_type: RecordingType,
     frequency: u32, // Hz
     #[serde(default)] // defaults zoom to 0 if not provided
     zoom: u8,
-    autostop: u16 // Sec, O if infinite
+    autostop: u16 // Sec, O if off
+}
+
+impl fmt::Display for RecorderSettings {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Type: {}, Frequency: {} Hz, Zoom: {}, Autostop: {}",
+            self.rec_type,
+            self.frequency,
+            self.zoom,
+            if self.autostop == 0 { String::from("Off") } else { format!("{} sec", self.autostop.to_string()) }
+        )
+    }
 }
 
 struct RecorderState {
@@ -104,7 +127,7 @@ async fn status() -> impl Responder {
 #[get["/api/recorder/status"]]
 async fn recorder_status(recorder_state: ArtixSharedRecorder) -> impl Responder {
     const MAX_LOG_LENGTH: usize = 200;
-    const LOG_COUNT: usize = 10;
+    const LOG_COUNT: usize = 20;
 
     let state = recorder_state.lock().await;
     let is_recording = state.running;
@@ -242,11 +265,13 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
     let now = chrono::Utc::now();
     let started_at = Some(now.timestamp() as u64);
     let started_at_str = format!("[{}]: <Started>", now.format("%Y/%m/%d %H:%M:%S UTC"));
+    let started_settings_string = format!("<Settings>  {}", settings);
     let mut state = recorder_state.lock().await;
     state.process = Some(child);
     state.running = true;
     state.started_at = started_at;
     state.logs.push_back(started_at_str);
+    state.logs.push_back(started_settings_string);
     drop(state);
     
 
