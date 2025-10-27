@@ -68,7 +68,7 @@ struct RecorderState {
 }
 
 type SharedRecorder = Arc<Mutex<RecorderState>>;
-type ArtixSharedRecorder = actix_web::web::Data<SharedRecorder>;
+type ArtixSharedRecorder = web::Data<SharedRecorder>;
 
 async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRecorder, pipe_tag: &str, responsible_for_exit: bool) {
     let reader = BufReader::new(pipe);
