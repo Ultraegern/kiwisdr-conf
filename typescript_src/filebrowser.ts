@@ -53,19 +53,19 @@ async function updateFileList() {
         const tbody = document.querySelector('#file-table tbody')!;
         files.forEach(file => {
             if (!(file.type === "file")) return;
-            const tr = document.createElement('tr');
+            const tr = document.createElement('tr'); 
             const formattedDate = new Date(file.mtime).toLocaleString(undefined, { hour12: false });
             const fileName = String(file.name);
             // Check file extension for viewable types
             const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
             const viewButton = viewableExtensions.includes(ext)
-            ? `<a href="${DOWNLOAD_URL + encodeURIComponent(fileName)}" target="_blank"><button>View</button></a>`
-            : '';
+                ? `<a href="${DOWNLOAD_URL + encodeURIComponent(fileName)}" target="_blank"><button>View</button></a>`
+                : '';
 
             tr.innerHTML = `
-                <td>${file.name}</td>
+                <td>${fileName}</td>
                 <td>${formattedDate}</td>
-                <td>${formatFileSize(file.size)}B</td>
+                <td>${formatFileSize(file.size)}</td>
                 <td>
                     <div class="button-group">
                     ${viewButton}
