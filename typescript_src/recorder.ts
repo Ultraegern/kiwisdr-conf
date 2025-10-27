@@ -144,16 +144,15 @@ async function getRecorderStatus() {
         const logTableBody = document.getElementById('logTableBody')! as HTMLBodyElement;
 
         is_recording = data.recording
+        (document.getElementById('startBtn')! as HTMLButtonElement).disabled = is_recording || start_error;
+        (document.getElementById('stopBtn')! as HTMLButtonElement).disabled = !is_recording;
         if (data.recording) {
             statusElement.textContent = "Recording";
             statusElement.style.color = "var(--accent-color)";
-            (document.getElementById('startBtn')! as HTMLButtonElement).disabled = is_recording || start_error;
-            (document.getElementById('stopBtn')! as HTMLButtonElement).disabled = false;
+            
         } else {
             statusElement.textContent = "Not Recording";
             statusElement.style.color = "var(--text-color-muted)";
-            (document.getElementById('startBtn')! as HTMLButtonElement).disabled = is_recording || start_error;
-            (document.getElementById('stopBtn')! as HTMLButtonElement).disabled = true;
         }
 
         if (data.started_at) {
@@ -169,9 +168,13 @@ async function getRecorderStatus() {
             logTableBody.innerHTML = "";
             for (const log of data.last_logs) {
                 const row = document.createElement("tr");
-                const cell = document.createElement("td");
-                cell.textContent = log;
-                row.appendChild(cell);
+                const timestampCell = document.createElement("td");
+                const timestamp = log.timestamp.toLocaleString(undefined, { hour12: false });
+                timestampCell.textContent = timestamp;
+                row.appendChild(timestampCell);
+                const logCell = document.createElement("td");
+                logCell.textContent = log.data;
+                row.appendChild(logCell);
                 logTableBody.appendChild(row);
             }
         } else {
