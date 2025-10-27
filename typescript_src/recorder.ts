@@ -169,7 +169,7 @@ async function getRecorderStatus() {
             for (const log of data.last_logs) {
                 const row = document.createElement("tr");
                 const timestampCell = document.createElement("td");
-                const timestamp = log.timestamp.toLocaleString(undefined, { hour12: false });
+                const timestamp = new Date(log.timestamp * 1000).toLocaleString(undefined, { hour12: false });
                 timestampCell.textContent = timestamp;
                 row.appendChild(timestampCell);
                 const logCell = document.createElement("td");
