@@ -143,7 +143,7 @@ async function getRecorderStatus() {
         const logsContainer = document.getElementById('logsContainer')! as HTMLBodyElement;
         const logTableBody = document.getElementById('logTableBody')! as HTMLBodyElement;
 
-        is_recording = data.recording
+        is_recording = data.recording;
         (document.getElementById('startBtn')! as HTMLButtonElement).disabled = is_recording || start_error;
         (document.getElementById('stopBtn')! as HTMLButtonElement).disabled = !is_recording;
         if (data.recording) {
