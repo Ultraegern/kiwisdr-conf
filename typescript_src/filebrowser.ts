@@ -4,56 +4,57 @@ const DOWNLOAD_URL = '/recorder/download/';
 const viewableExtensions = ['txt', 'png'];
 
 interface FileEntry {
-    name: String, 
-    size: String, 
-    date: Date
+    name: string;
+    type: string;
+    mtime: string;
+    size: number;
 }
 
-async function fetchFileList() {
-    try {
-        const res = await fetch(DOWNLOAD_URL);
-        const text = await res.text();
-        const doc = new DOMParser().parseFromString(text, 'text/html');
+function formatFileSize(bytes: number): string {
+    if (bytes < 0) {
+        return "Negative"
+    }
+    else if (bytes === 0) {
+        return "0 B"
+    }
+    else if (bytes < 1_000) {
+        return bytes.toFixed(0) + " B"
+    }
+    else if (bytes < 1_000_000) {
+        return (bytes / 1_000).toFixed(1) + " kB"
+    }
+    else if (bytes < 1_000_000_000) {
+        return (bytes / 1_000_000).toFixed(1) + " MB"
+    }
+    else {
+        return (bytes / 1_000_000_000).toFixed(1) + " GB"
+    }
+}
 
-        const pre = doc.querySelector('pre');
-        if (!pre) {
+async function fetchFileList(): Promise<FileEntry[]> {
+    const response = await fetch(DOWNLOAD_URL);
+    if (!response.ok) throw new Error('Failed to fetch files');
+    const data: FileEntry[] = await response.json();
+    return data;
+}
+
+async function updateFileList() {
+    try {
+        let files: FileEntry[] = await fetchFileList();
+        if (!files || files.length === 0) {
             (document.getElementById('file-table')! as HTMLTableElement).innerHTML = "<tr><td colspan='4'>No files found.</td></tr>";
             return;
         }
 
-        const lines = pre.innerText.split('\n').slice(3); // Skip header lines
-
-        let files: FileEntry[] = [];
-
-        for (const line of lines) {
-            // Match lines like: file123.wav  15-Oct-2025 13:50  100M
-            const match = line.match(/(\S+)\s+(\d{2})-(\w{3})-(\d{4})\s+(\d{2}):(\d{2})\s+([\d.]+\w?)/);
-            if (!match) continue;
-
-            const [_, name, day, monthStr, year, hour, minute, size] = match;
-
-            const monthMap: Record<string, number> = {
-                Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-                Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
-            };
-            if (name === undefined || size === undefined || monthStr === undefined) continue;
-            const month = monthMap[monthStr];
-            if (month === undefined) continue;
-            const fileDate = new Date(Number(year), month, Number(day), Number(hour), Number(minute));
-
-            files.push({ name, size, date: fileDate });
-        };
-
         // Sort by date descending (newest first)
-        files.sort((a, b) => b.date.getTime() - a.date.getTime());
+        files.sort((a, b) => new Date(b.mtime).getTime() - new Date(a.mtime).getTime());
 
         // Populate the table
         const tbody = document.querySelector('#file-table tbody')!;
         files.forEach(file => {
+            if (!(file.type === "file")) return;
             const tr = document.createElement('tr');
-            const pad = (n: number): string => n.toString().padStart(2, '0');
-            const d = file.date;
-            const formattedDate = `${pad(d.getHours())}:${pad(d.getMinutes())} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
+            const formattedDate = new Date(file.mtime).toLocaleString(undefined, { hour12: false });
             const fileName = String(file.name);
             // Check file extension for viewable types
             const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
@@ -64,7 +65,7 @@ async function fetchFileList() {
             tr.innerHTML = `
                 <td>${file.name}</td>
                 <td>${formattedDate}</td>
-                <td>${file.size}B</td>
+                <td>${formatFileSize(file.size)}B</td>
                 <td>
                     <div class="button-group">
                     ${viewButton}
@@ -84,7 +85,6 @@ async function fetchFileList() {
             tbody.innerHTML = `<tr><td colspan="4">Error: ${message}</td></tr>`;
         }
     }
-
 }
 
-fetchFileList();
+updateFileList();
