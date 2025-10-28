@@ -243,7 +243,7 @@ input:disabled {
     --accent-color-shadow: rgba(255, 0, 0, 0.3);
     --text-color-bright: #1e1e1e;
     --text-color-muted: #2e2e2e;
-    --main-color-medium-hover: #d5d5d5;
+    --main-color-medium-hover: #eeeeee;
   }
   button {
     border: 2px solid var(--main-color-dark);
@@ -270,6 +270,16 @@ input:disabled {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 8px var(--accent-color-shadow);
+  }
+  table {
+  background-color: var(--main-color-light);
+  color: var(--text-color-bright);
+  }
+  th{
+    background-color: var(--main-color-medium)
+  }
+  th, td {
+  border-bottom: 1px solid var(--main-color-dark);
   }
 }
 @media (max-width:960px) {
