@@ -217,7 +217,7 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
 
         let bandwidth = (MAX_FREQ - MIN_FREQ) / (1 << zoom); // "(1 << zoom)" bitshift is same as "(2^zoom)"
         let selection_freq_max = center_freq.saturating_add(bandwidth / 2); // Saturating add/sub to avoid integer overflow
-        let selection_freq_min = center_freq.saturating_sub(bandwidth / 2);
+        let selection_freq_min = (center_freq as i64).saturating_sub((bandwidth as i64) / 2);
 
         if selection_freq_max > MAX_FREQ {
             return HttpResponse::BadRequest().json(json!({ 
@@ -226,7 +226,7 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
                 "started_at": Option::<u64>::None
             }));
         }
-        if selection_freq_min < MIN_FREQ {
+        if selection_freq_min < MIN_FREQ as i64 {
             return HttpResponse::BadRequest().json(json!({ 
                 "message": "The selected frequency range exceeds the minimum frequency",
                 "recording": false,
