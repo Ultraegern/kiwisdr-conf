@@ -272,14 +272,14 @@ input:disabled {
     box-shadow: 0 0 8px var(--accent-color-shadow);
   }
   table {
-  background-color: var(--main-color-light);
-  color: var(--text-color-bright);
+    background-color: var(--main-color-light);
+    color: var(--text-color-bright);
   }
   th{
     background-color: var(--main-color-medium)
   }
   th, td {
-  border-bottom: 1px solid var(--main-color-dark);
+    border-bottom: 1px solid var(--main-color-dark);
   }
 }
 @media (max-width:960px) {
