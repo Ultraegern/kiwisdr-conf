@@ -19,12 +19,7 @@ if [[ ! -f "$CA_DIR/KiwiCA.key" || ! -f "$CA_DIR/KiwiCA.pem" ]]; then
   # Self-sign CA certificate (10 years)
   openssl req -x509 -new -key "$CA_DIR/KiwiCA.key" \
     -sha256 -days 3650 \
-    -subj "/C=DK
-    /ST=Aarhus
-    /L=Skyby
-    /O=SkyTEM Surveys ApS
-    /OU=Local Development CA
-    /CN=KiwiCA" \
+    -subj "/C=DK/ST=Aarhus/L=Skyby/O=SkyTEM Surveys ApS/OU=Local Development CA/CN=KiwiCA" \
     -out "$CA_DIR/KiwiCA.pem"
   chmod 644 "$CA_DIR/KiwiCA.pem"
 else
