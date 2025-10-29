@@ -65,7 +65,13 @@ IP.1  = 10.42.0.99
 
 [ policy ]
 policyIdentifier = 1.3.6.1.4.1.12345.1.1
-userNotice = "Business Category: Private Organization"
+# Optional user notice can be done with a nested section
+userNotice.1 = @notice1
+
+[ notice1 ]
+explicitText = "Business Category: Private Organization"
+organization = "SkyTEM Surveys ApS"
+noticeNumbers = 1
 EOF
 
 # ----------------------------------------------------------------------
