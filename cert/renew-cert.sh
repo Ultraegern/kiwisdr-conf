@@ -45,6 +45,7 @@ L = Skyby
 O = SkyTEM Surveys ApS
 OU = SkyTEM Surveys ApS
 CN = ${HOST}
+serialNumber = 1234567890
 
 [ req_ext ]
 subjectAltName = @alt_names
@@ -64,6 +65,7 @@ IP.1  = 10.42.0.99
 
 [ policy ]
 policyIdentifier = 1.3.6.1.4.1.12345.1.1
+userNotice = "Business Category: Private Organization"
 EOF
 
 # ----------------------------------------------------------------------
@@ -83,7 +85,6 @@ openssl x509 -req -in "$SSL_DIR/kiwisdr.csr" \
   -CAcreateserial -out "$SSL_DIR/kiwisdr.crt" \
   -days 90 -sha256 -extfile "$CONF_FILE" -extensions server_cert
 
-# tighten permissions
 chmod 644 "$SSL_DIR/kiwisdr.crt"
 
 # Cleanup
