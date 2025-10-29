@@ -63,7 +63,8 @@ DNS.1 = ${HOST}
 IP.1  = 10.42.0.99
 
 [ policy ]
-policyIdentifier = 1.3.6.1.4.1.12345.1.1
+policyIdentifier = 1.3.6.1.5.5.7.2.1
+CPS.1 = "https://www.digicert.com/CPS"
 EOF
 
 # ----------------------------------------------------------------------
