@@ -1,11 +1,12 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use serde::{Serialize, Deserialize};
 use serde_json::json;
-use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::io::{AsyncBufReadExt, BufReader, AsyncRead};
 use std::collections::VecDeque;
 use std::process::Stdio;
 use std::sync::Arc;
 use std::fmt;
+use std::io::Result;
 use tokio::process::Child;
 use tokio::sync::Mutex;
 
@@ -70,7 +71,7 @@ struct RecorderState {
 type SharedRecorder = Arc<Mutex<RecorderState>>;
 type ArtixSharedRecorder = web::Data<SharedRecorder>;
 
-async fn read_output(pipe: impl tokio::io::AsyncRead + Unpin, recorder: SharedRecorder, pipe_tag: &str, responsible_for_exit: bool) {
+async fn read_output(pipe: impl AsyncRead + Unpin, recorder: SharedRecorder, pipe_tag: &str, responsible_for_exit: bool) {
     let reader = BufReader::new(pipe);
     let mut lines = reader.lines();
     while let Ok(Some(line)) = lines.next_line().await {
@@ -111,7 +112,7 @@ fn to_scientific(num: u32) -> String {
 }
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> Result<()> {
     let port: u16 = 5004;
 
     let shared_recorder: SharedRecorder = Arc::new(Mutex::new(RecorderState {
