@@ -60,7 +60,7 @@ certificatePolicies = @policy
 
 [ alt_names ]
 DNS.1 = ${HOST}
-IP.1  = 10.42.0.99
+IP.1  = 172.19.124.66
 
 [ policy ]
 policyIdentifier = 1.3.6.1.4.1.12345.1.1
