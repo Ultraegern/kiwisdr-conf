@@ -62,7 +62,9 @@ sudo ./setup.sh
 
 Now you can go to [https://kiwisdr.local/help](https://kiwisdr.local/help)
 > ℹ️ **Note:** The TLS cert is Signed by KiwiCA. If you want the KiwiCA certificate run:  
->  `scp debian@kiwisdr.local:/etc/ssl/kiwisdr/ca/KiwiCA.pem ./`
+>  ```bash
+> scp debian@kiwisdr.local:/etc/ssl/kiwisdr/ca/KiwiCA.pem ./
+>  ```
 
 ### Customise
 Go to the [Admin Panel](https://kiwisdr.local/admin)  
