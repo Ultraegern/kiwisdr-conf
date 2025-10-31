@@ -12,7 +12,7 @@ This repo is known to work with
 # Installation Instructions
 
 ### Connect with `ssh` and change password:
-Now you can `ssh` into the Kiwi (from a terminal on you laptop, not the Kiwi web console)
+Now you can `ssh` into the Kiwi
 ```shell
 ssh debian@kiwisdr.local
 ```
