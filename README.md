@@ -11,30 +11,30 @@ This repo is known to work with
 
 # Installation Instructions
 
-### Change password and connect with `ssh`:
-Go to the KiwiSDR Admin Panel
-[http://kiwisdr.local:8073/admin](http://kiwisdr.local:8073/admin)  (Note: `http`, not `https`)  
-Go to the `Security` tab  
-Edit `Admin password`  
-Go to the `Console` tab  
-Press the `Connect` button
-
-Chage the password of the root user:
-```bash
-passwd root
-```
-Chage the password of the debian user:
-```bash
-passwd debian
-```
+### Connect with `ssh` and change password:
 Now you can `ssh` into the Kiwi (from a terminal on you laptop, not the Kiwi web console)
 ```shell
 ssh debian@kiwisdr.local
 ```
+Default password is `temppwd`  
 Switch user
 ```bash
-su
+sudo su
 ```
+#### Change Passwords
+Root password
+```bash
+passwd
+```
+Debian password
+```bash
+passwd debian
+```
+Admin panel password
+Go to the KiwiSDR Admin Panel:  
+[http://kiwisdr.local:8073/admin](http://kiwisdr.local:8073/admin)  (Note: `http`, not `https`)  
+Go to the `Security` tab  
+Edit `Admin password`
 
 ### Add key
 Add public.key to your keyring:
