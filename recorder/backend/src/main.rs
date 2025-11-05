@@ -1,7 +1,7 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use serde::{Serialize, Deserialize};
 use serde_json::json;
-use std::{collections::VecDeque, process::Stdio, sync::Arc, fmt, io::Result};
+use std::{collections::VecDeque, process::Stdio, sync::Arc, fmt, fmt::{Display, Formatter}, io::Result};
 use tokio::{process::Child, sync::Mutex, io::{AsyncBufReadExt, BufReader, AsyncRead}};
 use chrono::Utc;
 
@@ -20,8 +20,8 @@ enum RecordingType {
     IQ
 }
 
-impl fmt::Display for RecordingType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Display for RecordingType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             RecordingType::PNG => write!(f, "Png"),
             RecordingType::IQ => write!(f, "Iq"),
@@ -38,8 +38,8 @@ struct RecorderSettings {
     autostop: u16 // Sec, O if off
 }
 
-impl fmt::Display for RecorderSettings {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Display for RecorderSettings {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "Type: {}, Frequency: {} Hz, {}Autostop: {}",
