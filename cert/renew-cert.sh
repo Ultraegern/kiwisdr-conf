@@ -56,14 +56,10 @@ extendedKeyUsage = serverAuth
 subjectAltName = @alt_names
 subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid,issuer
-certificatePolicies = @policy
 
 [ alt_names ]
 DNS.1 = ${HOST}
-IP.1  = 172.19.124.66
-
-[ policy ]
-policyIdentifier = 1.3.6.1.4.1.12345.1.1
+IP.1  = 172.19.124.80
 EOF
 
 # ----------------------------------------------------------------------
