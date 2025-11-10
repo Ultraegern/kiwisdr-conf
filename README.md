@@ -68,9 +68,6 @@ Now you can go to [https://kiwisdr.local/help](https://kiwisdr.local/help)
 
 ### Customise
 Go to the [Admin Panel](https://kiwisdr.local/admin)  
-Go to the `Extensions` tab  
-Go to `WSPR`  
-Update grid continuously from GPS: `Yes`  
 Go to the `Webpage` tab  
 Top bar title: `KiwiSDR by SkyTEM Surveys ApS`  
 Owner info: [Copy this file](https://github.com/Ultraegern/kiwisdr-conf/blob/main/skytem-logo.html)  
