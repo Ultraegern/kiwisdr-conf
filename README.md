@@ -30,11 +30,11 @@ Debian password
 ```bash
 passwd debian
 ```
-Admin panel password
+#### Admin panel password  
 Go to the KiwiSDR Admin Panel:  
 [http://kiwisdr.local:8073/admin](http://kiwisdr.local:8073/admin)  (Note: `http`, not `https`)  
 Go to the `Security` tab  
-Edit `Admin password`
+Edit `Admin password`  
 
 ### Add key
 Add public.key to your keyring:
