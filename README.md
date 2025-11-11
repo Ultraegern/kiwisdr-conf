@@ -12,7 +12,7 @@ This repo is known to work with
 # Installation Instructions
 
 ### Connect with `ssh` and change password:
-Now you can `ssh` into the Kiwi
+ssh into the Kiwi (from a terminal on your laptop)
 ```shell
 ssh debian@kiwisdr.local
 ```
@@ -31,16 +31,29 @@ Debian password
 passwd debian
 ```
 #### (Optional) Setup ssh keys  
-Generate a key (if you dont have one) (on your laptop, the the kiwi)  
+Generate a key (if you don't have one) (on your laptop, the the kiwi)  
 ```bash
 ssh-keygen -t ed25519 -C "email@example.com"
 ```
-Setup ssh key for `debian` user   
+Setup ssh key for `debian` user  
 ```bash
 ssh-copy-id debian@kiwisdr.local
 ```
 ##### (Optional) Setup root ssh keys  
-
+Allow direct root login over ssh (on the Kiwi)  
+```bash
+sudo sed -i '/^#\?PermitRootLogin/c\PermitRootLogin yes' /etc/ssh/sshd_config && 
+sudo systemctl restart ssh
+```
+Transfer the key (on your laptop)
+```bash
+ssh-copy-id root@kiwisdr.local
+```
+After you have transferred the key you can disable direct root login with a password (so it only allows direct root login with ssh keys) (on the Kiwi) 
+```bash
+sudo sed -i '/^#\?PermitRootLogin/c\PermitRootLogin prohibit-password' /etc/ssh/sshd_config && 
+sudo systemctl restart ssh
+```
 #### Admin panel password  
 Go to the KiwiSDR Admin Panel:  
 [http://kiwisdr.local:8073/admin](http://kiwisdr.local:8073/admin)  (Note: `http`, not `https`)  
