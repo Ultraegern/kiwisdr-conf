@@ -30,6 +30,17 @@ Debian password
 ```bash
 passwd debian
 ```
+#### (Optional) Setup ssh keys  
+Generate a key (if you dont have one) (on your laptop, the the kiwi)  
+```bash
+ssh-keygen -t ed25519 -C "email@example.com"
+```
+Setup ssh key for `debian` user   
+```bash
+ssh-copy-id debian@kiwisdr.local
+```
+##### (Optional) Setup root ssh keys  
+
 #### Admin panel password  
 Go to the KiwiSDR Admin Panel:  
 [http://kiwisdr.local:8073/admin](http://kiwisdr.local:8073/admin)  (Note: `http`, not `https`)  
