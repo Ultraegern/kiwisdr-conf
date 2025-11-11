@@ -31,7 +31,7 @@ Debian password
 passwd debian
 ```
 #### (Optional) Setup ssh keys  
-Generate a key (if you don't have one) (on your laptop, the the kiwi)  
+Generate a key (if you don't have one) (on your laptop, not the kiwi)  
 ```bash
 ssh-keygen -t ed25519 -C "email@example.com"
 ```
