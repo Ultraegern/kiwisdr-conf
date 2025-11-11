@@ -74,6 +74,9 @@ echo "✅ Web files are configured."
 echo "⬜ Configuring Nginx"
 verify_signature $DIR/nginx/nginx.conf && sudo cp $DIR/nginx/nginx.conf /etc/nginx/sites-available/kiwisdr
 
+# Disable default site
+sudo rm -f /etc/nginx/sites-enabled/default
+
 # Enable the site
 sudo ln -sf /etc/nginx/sites-available/kiwisdr /etc/nginx/sites-enabled/kiwisdr
 
