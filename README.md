@@ -1,16 +1,18 @@
-# Overview
-This repository installs and configues:
-* Nginx as a TLS endpoint, webserver for static files, and a proxy for everything else
-* KiwiClient as a tool for recording from the Kiwi
-* Rust + Actix Web as a webserver for exposing KiwiClient as a REST api
-* Html + CSS + Typescript as a web based frontend to KiwiClient
+# Overview  
+This repository installs and configues:  
+* Nginx as a TLS endpoint, webserver for static files, and a proxy for everything else  
+* KiwiClient for recording from the KiwiSDR  
+* Rust + Actix Web as a webserver for exposing KiwiClient as a REST api  
+* Html + CSS + Typescript as a web based frontend to KiwiClient  
 ### Compatability
 Oficial KiwiSDR firmware .img files are [here](http://kiwisdr.com/quickstart/index.html#id-dload).  
+Only works with Debian 11 based KiwiSDR firmware, not Debian 9 based.  
+If your KiwiSDR is using Debian 9, you must update.
 This repo is known to work with
 * KiwiSDR 1 + BeagleBone Green + [This firmware](http://kiwisdr.com/files/KiwiSDR_v1.804_BBG_BBB_Debian_11.11.img.xz) (SHA256: `2f60798f60b647f0b18f8ac7493776c7b75f22f17977dffdd6c8253274538c3f`)
+* KiwiSDR 2 + BeagleBone Green + Stock firmware
 
-# Installation Instructions
-
+# Installation Instructions  
 ### Connect with `ssh` and change password:
 ssh into the Kiwi (from a terminal on your laptop)
 ```shell
@@ -30,7 +32,7 @@ Debian password
 ```bash
 passwd debian
 ```
-#### (Optional) Setup ssh keys  
+### (Optional) Setup ssh keys  
 Generate a key (if you don't have one) (on your laptop, not the kiwi)  
 ```bash
 ssh-keygen -t ed25519 -C "email@example.com"
@@ -39,7 +41,7 @@ Setup ssh key for `debian` user
 ```bash
 ssh-copy-id debian@kiwisdr.local
 ```
-##### (Optional) Setup root ssh keys  
+#### (Optional) Setup root ssh keys  
 Allow direct root login over ssh (on the Kiwi)  
 ```bash
 sudo sed -i '/^#\?PermitRootLogin/c\PermitRootLogin yes' /etc/ssh/sshd_config && 
@@ -54,7 +56,7 @@ After you have transferred the key you can disable direct root login with a pass
 sudo sed -i '/^#\?PermitRootLogin/c\PermitRootLogin prohibit-password' /etc/ssh/sshd_config && 
 sudo systemctl restart ssh
 ```
-#### Admin panel password  
+### Admin panel password  
 Go to the KiwiSDR Admin Panel:  
 [http://kiwisdr.local:8073/admin](http://kiwisdr.local:8073/admin)  (Note: `http`, not `https`)  
 Go to the `Security` tab  
@@ -90,11 +92,17 @@ Now you can go to [https://kiwisdr.local/help](https://kiwisdr.local/help)
 > scp debian@kiwisdr.local:/etc/ssl/kiwisdr/ca/KiwiCA.pem ./
 >  ```
 
-### Customise
+## Customise  
 Go to the [Admin Panel](https://kiwisdr.local/admin)  
 Go to the `Webpage` tab  
-Top bar title: `KiwiSDR by SkyTEM Surveys ApS`  
+Top bar title:
+```
+KiwiSDR by SkyTEM Surveys ApS
+```
 Owner info: [Copy this file](https://github.com/Ultraegern/kiwisdr-conf/blob/main/skytem-logo.html)  
 Grid square: Continuous update from GPS: `true`  
 Location: Continuous update from GPS: `Hi Res`  
-Admin email: `it@skytem.com`  
+Admin email:
+```
+it@skytem.com
+```
