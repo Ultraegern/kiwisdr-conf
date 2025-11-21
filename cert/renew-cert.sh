@@ -26,9 +26,6 @@ else
   echo "Using existing KiwiCA"
 fi
 
-# ----------------------------------------------------------------------
-# 2. Create OpenSSL config for SAN and corporate identity extensions
-# ----------------------------------------------------------------------
 CONF_FILE=$(mktemp)
 cat > "$CONF_FILE" <<EOF
 [ req ]
@@ -59,7 +56,7 @@ authorityKeyIdentifier = keyid,issuer
 
 [ alt_names ]
 DNS.1 = ${HOST}
-IP.1  = 172.19.124.80
+IP.1  = 172.19.124.15
 EOF
 
 # ----------------------------------------------------------------------
