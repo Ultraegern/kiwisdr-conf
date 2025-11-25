@@ -1,4 +1,4 @@
-use actix_web::{App, HttpResponse, HttpServer, Responder, delete, get, post, web::{self, Data, Path}};
+use actix_web::{App, HttpResponse, HttpServer, Responder, get, post, web::{self, Data, Path}};
 use serde::{Serialize, Deserialize};
 use serde_json::json;
 use std::{collections::{HashMap, VecDeque}, fmt::{self, Display, Formatter}, io::Result, process::Stdio, sync::Arc};
@@ -210,7 +210,7 @@ async fn recorder_status_one(path: Path<u32>, shared_hashmap: ArtixRecorderHashm
 
     if shared_job.is_none() {
         return HttpResponse::BadRequest().json(json!({
-            "message": "job_id not found"
+            "message": "Job not found: job_id not valid"
         }));
     }
 
@@ -355,49 +355,42 @@ async fn start_recorder(request_settings_raw: ArtixRecorderSettings, shared_hash
     hashmap.insert(job_id, shared_job.clone());
     drop(hashmap);
 
-    return HttpResponse::Ok().json(json!({ 
-        "message": "Recorder started successfully",
-    }))
+    let job_status = JobStatus::from(&*(shared_job.lock().await));
+    HttpResponse::Ok().json(job_status)
 }
 
-#[delete("/api/recorder/stop/{job_id}")]
-async fn stop_recorder(recorder_state: ArtixRecorderHashmap) -> impl Responder {
-    {
-        let check_state = recorder_state.lock().await;
-        let is_recorder_running: bool = check_state.running;
-        drop(check_state);
+#[post("/api/recorder/stop/{job_id}")]
+async fn stop_recorder(path: Path<u32>, shared_hashmap: ArtixRecorderHashmap) -> impl Responder {
+    let job_id = path.into_inner();
 
-        if !is_recorder_running{ // Exit if not running
-            return HttpResponse::BadRequest().json(json!({ 
-                "message": "No recorder is running",
-                "recording": false,
-                "started_at": Option::<u64>::None
-            }));
-        }
+    let hashmap = shared_hashmap.lock().await;
+    let option_shared_job = (hashmap.get(&job_id)).cloned();
+    drop(hashmap);
+
+    if option_shared_job.is_none() {
+        return HttpResponse::BadRequest().json(json!({
+            "message": "Job not found: job_id not valid"
+        }));
     }
 
-    let mut state = recorder_state.lock().await;
-    state.running = false;
-    state.started_at = None;
-    let child = state.process.take();
-    drop(state);
+    let shared_job: SharedJob = option_shared_job.unwrap();
+
+    let mut job = shared_job.lock().await;
+    let child = job.process.take();
+    drop(job);
 
     if let Some(mut child) = child {
         let _ = child.kill().await;
         let _ = child.wait().await;
     }
 
-    let mut state = recorder_state.lock().await;
-    state.process = None;
-    state.logs.push_back(Log {
+    let mut job = shared_job.lock().await;
+    job.process = None;
+    job.logs.push_back(Log {
         timestamp: Utc::now().timestamp() as u64,
         data: "<Stoped Manualy>".to_string()
     });
-    drop(state);
 
-    return HttpResponse::Ok().json(json!({ 
-        "message": "Recorder stoped successfully",
-        "recording": false,
-        "started_at": Option::<u64>::None
-    }))
+    let job_status = JobStatus::from(&*job);
+    HttpResponse::Ok().json(job_status)
 }
