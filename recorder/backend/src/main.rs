@@ -107,11 +107,11 @@ type SharedJob = Arc<Mutex<Job>>;
 type SharedJobHashmap =  Arc<Mutex<HashMap<u32, SharedJob>>>;
 type ArtixRecorderHashmap = web::Data<SharedJobHashmap>;    
 
-async fn read_output(pipe: impl AsyncRead + Unpin, recorder: SharedRecorder, pipe_tag: &str, responsible_for_exit: bool) {
+async fn read_output(pipe: impl AsyncRead + Unpin, job: SharedJob, pipe_tag: &str, responsible_for_exit: bool) {
     let reader = BufReader::new(pipe);
     let mut lines = reader.lines();
     while let Ok(Some(line)) = lines.next_line().await {
-        let mut state = recorder.lock().await;
+        let mut state = job.lock().await;
         state.logs.push_back(Log {
             timestamp: Utc::now().timestamp() as u64, 
             data: format!("<{}> {}", pipe_tag, line)
@@ -122,7 +122,7 @@ async fn read_output(pipe: impl AsyncRead + Unpin, recorder: SharedRecorder, pip
 
     }
     if responsible_for_exit {
-        let mut state = recorder.lock().await;
+        let mut state = job.lock().await;
         state.running = false;
         state.started_at = None;
         state.logs.push_back(Log {
