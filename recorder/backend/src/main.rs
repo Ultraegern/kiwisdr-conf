@@ -1,7 +1,7 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, web, web::{Path, Data}, App, HttpResponse, HttpServer, Responder};
 use serde::{Serialize, Deserialize};
 use serde_json::json;
-use std::{collections::VecDeque, process::Stdio, sync::Arc, fmt, fmt::{Display, Formatter}, io::Result};
+use std::{collections::{HashMap, VecDeque}, fmt::{self, Display, Formatter}, io::Result, process::Stdio, sync::Arc};
 use tokio::{process::Child, sync::Mutex, io::{AsyncBufReadExt, BufReader, AsyncRead}};
 use chrono::Utc;
 
@@ -56,15 +56,18 @@ impl Display for RecorderSettings {
 
 type ArtixRecorderSettings = web::Json<RecorderSettings>;
 
-struct RecorderState {
+struct Job {
+    job_id: u32,
     running: bool,
     process: Option<Child>,
     started_at: Option<u64>,
-    logs: Logs
+    logs: Logs,
+    settings: RecorderSettings,
 }
 
-type SharedRecorder = Arc<Mutex<RecorderState>>;
-type ArtixSharedRecorder = web::Data<SharedRecorder>;
+type SharedJob = Arc<Mutex<Job>>;
+type SharedJobHashmap =  Arc<Mutex<HashMap<u32, SharedJob>>>;
+type ArtixRecorderHashmap = web::Data<SharedJobHashmap>;    
 
 async fn read_output(pipe: impl AsyncRead + Unpin, recorder: SharedRecorder, pipe_tag: &str, responsible_for_exit: bool) {
     let reader = BufReader::new(pipe);
@@ -110,17 +113,17 @@ fn to_scientific(num: u32) -> String {
 async fn main() -> Result<()> {
     let port: u16 = 5004;
 
-    let shared_recorder: SharedRecorder = Arc::new(Mutex::new(RecorderState {
-        running: false,
-        process: None,
-        started_at: None,
-        logs: VecDeque::new(),
-    }));
+    let shared_hashmap: ArtixRecorderHashmap = 
+        Data::new(
+            Arc::new(
+                Mutex::new(
+                    HashMap::<u32, SharedJob>::new()
+    )));
 
     println!("Starting server on port {}", port);
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(shared_recorder.clone()))
+            .app_data(web::Data::new(shared_hashmap.clone()))
             .service(status)
             .service(start_recorder)
             .service(stop_recorder)
