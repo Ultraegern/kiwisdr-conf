@@ -13,7 +13,7 @@ struct Log {
 
 type Logs = VecDeque<Log>;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 enum RecordingType {
     PNG,
@@ -29,7 +29,7 @@ impl Display for RecordingType {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone, Copy)]
 struct RecorderSettings {
     rec_type: RecordingType,
     frequency: u32, // Hz
@@ -55,6 +55,27 @@ impl Display for RecorderSettings {
 }
 
 type ArtixRecorderSettings = web::Json<RecorderSettings>;
+
+#[derive(Serialize, Clone)]
+struct JobStatus {
+    job_id: u32,
+    running: bool,
+    started_at: Option<u64>,
+    logs: Logs,
+    settings: RecorderSettings,
+}
+
+impl From<&Job> for JobStatus {
+    fn from(value: &Job) -> Self {
+        JobStatus {
+            job_id: value.job_id,
+            running: value.running,
+            started_at: value.started_at,
+            logs: value.logs.clone(),
+            settings: value.settings, 
+        }
+    }
+}
 
 struct Job {
     job_id: u32,
@@ -142,7 +163,27 @@ async fn status() -> impl Responder {
 }
 
 #[get["/api/recorder/status"]]
-async fn recorder_status(recorder_state: ArtixSharedRecorder) -> impl Responder {
+async fn recorder_status(shared_hasmap: ArtixRecorderHashmap) -> impl Responder {
+    let mut locked_jobs: Vec<SharedJob> = Vec::new();
+
+    let hashmap = shared_hasmap.lock().await;
+    for key in hashmap.keys() {
+        locked_jobs.push(hashmap[key].clone());
+    }
+    drop(hashmap);
+
+    let mut jobs: Vec<JobStatus> = Vec::new();
+    for locked_job in locked_jobs {
+        let job_guard = locked_job.lock().await;
+        let job_status = JobStatus::from(&*job_guard);
+        drop(job_guard);
+        jobs.push(job_status);
+    }
+    HttpResponse::Ok().json(jobs)
+}
+
+#[get("/api/recorder/status/{job_id}")]
+async fn recorder_status(path: Path<u32>, locked_hasmap: ArtixRecorderHashmap) -> impl Responder {
     const MAX_LOG_LENGTH: usize = 200;
     const LOG_COUNT: usize = 20;
 
