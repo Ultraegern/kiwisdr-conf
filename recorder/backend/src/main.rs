@@ -1,4 +1,4 @@
-use actix_web::{get, post, web, web::{Path, Data}, App, HttpResponse, HttpServer, Responder};
+use actix_web::{App, HttpResponse, HttpServer, Responder, delete, get, post, web::{self, Data, Path}};
 use serde::{Serialize, Deserialize};
 use serde_json::json;
 use std::{collections::{HashMap, VecDeque}, fmt::{self, Display, Formatter}, io::Result, process::Stdio, sync::Arc};
@@ -181,10 +181,10 @@ async fn status() -> impl Responder {
 }
 
 #[get["/api/recorder/status"]]
-async fn recorder_status_all(shared_hasmap: ArtixRecorderHashmap) -> impl Responder {
+async fn recorder_status_all(shared_hashmap: ArtixRecorderHashmap) -> impl Responder {
     let mut locked_jobs: Vec<SharedJob> = Vec::new();
 
-    let hashmap = shared_hasmap.lock().await;
+    let hashmap = shared_hashmap.lock().await;
     for key in hashmap.keys() {
         locked_jobs.push(hashmap[key].clone());
     }
@@ -201,10 +201,10 @@ async fn recorder_status_all(shared_hasmap: ArtixRecorderHashmap) -> impl Respon
 }
 
 #[get("/api/recorder/status/{job_id}")]
-async fn recorder_status_one(path: Path<u32>, shared_hasmap: ArtixRecorderHashmap) -> impl Responder {
+async fn recorder_status_one(path: Path<u32>, shared_hashmap: ArtixRecorderHashmap) -> impl Responder {
     let job_id = path.into_inner();
 
-    let hashmap = shared_hasmap.lock().await;
+    let hashmap = shared_hashmap.lock().await;
     let shared_job = (hashmap.get(&job_id)).cloned();
     drop(hashmap);
 
@@ -219,19 +219,17 @@ async fn recorder_status_one(path: Path<u32>, shared_hasmap: ArtixRecorderHashma
 }
 
 #[post("/api/recorder/start")]
-async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: ArtixSharedRecorder) -> impl Responder {
-    let settings = settings_raw.into_inner();
-    { // Exit if already running
-        let check_state = recorder_state.lock().await;
-        let is_recorder_running = check_state.running;
-        let recorder_start_time = check_state.started_at;
-        drop(check_state);
+async fn start_recorder(request_settings_raw: ArtixRecorderSettings, shared_hashmap: ArtixRecorderHashmap) -> impl Responder {
+    const MAX_RECORDER_SLOTS: usize = 3;
+    let settings = request_settings_raw.into_inner();
+    { // Check if all recorder slots are full (Only start a new recorder if there is at least 1 empty slot)
+        let hashmap = shared_hashmap.lock().await;
+        let used_recorder_slots = hashmap.keys().len();
+        drop(hashmap);
 
-        if is_recorder_running{
+        if used_recorder_slots >= MAX_RECORDER_SLOTS {
             return HttpResponse::BadRequest().json(json!({ 
-                "message": "Recorder is already running",
-                "recording": true,
-                "started_at": recorder_start_time
+                "message": "All recorder slots are full",
             }));
         }
     }
@@ -269,6 +267,15 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
         }
     }
     
+    // Generate job_id
+    let hashmap = shared_hashmap.lock().await;
+    let job_id: u32 = (u32::MIN..u32::MAX)
+        .find(|&id| !hashmap.contains_key(&id))
+        .expect("Job ID space exhausted");
+    drop(hashmap);
+
+    
+
     let filename_common = format!("{}_Fq{}", Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string(), to_scientific(settings.frequency));
     let filename_png = format!("{}_Zm{}", filename_common, settings.zoom.to_string());
     let filename_iq = format!("{}_Bw1d2e4", filename_common);
@@ -312,13 +319,6 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
         .spawn()
         .expect("Failed to start recorder process");
 
-    if let Some(stdout) = child.stdout.take() {
-        tokio::spawn(read_output(stdout, recorder_state.get_ref().clone(), "STDOUT", true));
-    }
-    if let Some(stderr) = child.stderr.take() {
-       tokio::spawn(read_output(stderr, recorder_state.get_ref().clone(), "STDERR", false));
-    }
-    
     let now = Utc::now().timestamp() as u64;
     let started_at_log = Log {
         timestamp: now,
@@ -328,24 +328,40 @@ async fn start_recorder(settings_raw: ArtixRecorderSettings, recorder_state: Art
         timestamp: now,
         data: format!("<Settings>  {}", settings)
     };
-    let mut state = recorder_state.lock().await;
-    state.process = Some(child);
-    state.running = true;
-    state.started_at = Some(now);
-    state.logs.push_back(started_at_log);
-    state.logs.push_back(started_settings_log);
-    drop(state);
-    
+
+    let job = Job {
+        job_id: job_id,
+        running: true,
+        process: None,
+        started_at: Some(now),
+        logs: VecDeque::from(vec![started_at_log, started_settings_log]),
+        settings: settings,
+    };
+
+    let shared_job: SharedJob = Arc::new(Mutex::new(job));
+
+    if let Some(stdout) = child.stdout.take() {
+        tokio::spawn(read_output(stdout, shared_job.clone(), "STDOUT", true));
+    }
+    if let Some(stderr) = child.stderr.take() {
+       tokio::spawn(read_output(stderr, shared_job.clone(), "STDERR", false));
+    }
+
+    let mut job2 = shared_job.lock().await;
+    job2.process = Some(child);
+    drop(job2);
+
+    let mut hashmap = shared_hashmap.lock().await;
+    hashmap.insert(job_id, shared_job.clone());
+    drop(hashmap);
 
     return HttpResponse::Ok().json(json!({ 
         "message": "Recorder started successfully",
-        "recording": true,
-        "started_at": Some(now)
     }))
 }
 
-#[post("/api/recorder/stop")]
-async fn stop_recorder(recorder_state: ArtixSharedRecorder) -> impl Responder {
+#[delete("/api/recorder/stop/{job_id}")]
+async fn stop_recorder(recorder_state: ArtixRecorderHashmap) -> impl Responder {
     {
         let check_state = recorder_state.lock().await;
         let is_recorder_running: bool = check_state.running;
