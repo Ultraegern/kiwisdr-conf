@@ -67,11 +67,28 @@ struct JobStatus {
 
 impl From<&Job> for JobStatus {
     fn from(value: &Job) -> Self {
+        const MAX_LOG_LENGTH: usize = 200;
+        const LOG_COUNT: usize = 20;
         JobStatus {
             job_id: value.job_id,
             running: value.running,
             started_at: value.started_at,
-            logs: value.logs.clone(),
+            logs: value.logs.iter()
+                .rev() // start from the newest
+                .take(LOG_COUNT)
+                .map(|log| {
+                    let truncated_data = if log.data.len() > MAX_LOG_LENGTH {
+                        format!("{}...", &log.data[..MAX_LOG_LENGTH])
+                    } else {
+                        log.data.clone()
+                    };
+
+                    Log {
+                        timestamp: log.timestamp,
+                        data: truncated_data,
+                    }
+                })
+                .collect(),
             settings: value.settings, 
         }
     }
@@ -148,14 +165,15 @@ async fn main() -> Result<()> {
             .service(status)
             .service(start_recorder)
             .service(stop_recorder)
-            .service(recorder_status)
+            .service(recorder_status_all)
+            .service(recorder_status_one)
     })
     .bind(("0.0.0.0", port))?
     .run()
     .await
 }
 
-#[get("/api/status")]
+#[get("/api")]
 async fn status() -> impl Responder {
     HttpResponse::Ok().body(
         "Api is Online"
@@ -163,7 +181,7 @@ async fn status() -> impl Responder {
 }
 
 #[get["/api/recorder/status"]]
-async fn recorder_status(shared_hasmap: ArtixRecorderHashmap) -> impl Responder {
+async fn recorder_status_all(shared_hasmap: ArtixRecorderHashmap) -> impl Responder {
     let mut locked_jobs: Vec<SharedJob> = Vec::new();
 
     let hashmap = shared_hasmap.lock().await;
@@ -183,45 +201,21 @@ async fn recorder_status(shared_hasmap: ArtixRecorderHashmap) -> impl Responder 
 }
 
 #[get("/api/recorder/status/{job_id}")]
-async fn recorder_status(path: Path<u32>, locked_hasmap: ArtixRecorderHashmap) -> impl Responder {
-    const MAX_LOG_LENGTH: usize = 200;
-    const LOG_COUNT: usize = 20;
+async fn recorder_status_one(path: Path<u32>, shared_hasmap: ArtixRecorderHashmap) -> impl Responder {
+    let job_id = path.into_inner();
 
-    let state = recorder_state.lock().await;
-    let is_recording = state.running;
-    let started_at = state.started_at;
-    let logs = state.logs.clone();
-    drop(state);
+    let hashmap = shared_hasmap.lock().await;
+    let shared_job = (hashmap.get(&job_id)).cloned();
+    drop(hashmap);
 
-    let last_logs: Vec<Log> = logs
-        .iter()
-        .rev() // start from the newest
-        .take(LOG_COUNT)
-        .map(|log| {
-            let truncated_data = if log.data.len() > MAX_LOG_LENGTH {
-                format!("{}...", &log.data[..MAX_LOG_LENGTH])
-            } else {
-                log.data.clone()
-            };
+    if shared_job.is_none() {
+        return HttpResponse::BadRequest().json(json!({
+            "message": "job_id not found"
+        }));
+    }
 
-            Log {
-                timestamp: log.timestamp,
-                data: truncated_data,
-            }
-        })
-        .collect();
-
-    let message: String = match is_recording {
-        true => "Recording",
-        false => "Not Recording"
-    }.to_string();
-
-    return HttpResponse::Ok().json(json!({ 
-        "message": message,
-        "recording": is_recording,
-        "started_at": started_at,
-        "last_logs": last_logs
-    }))
+    let job_status = JobStatus::from(&*(shared_job.unwrap().lock().await));
+    return HttpResponse::Ok().json(job_status)
 }
 
 #[post("/api/recorder/start")]
