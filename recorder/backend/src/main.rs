@@ -1,4 +1,4 @@
-use actix_web::{App, HttpResponse, HttpServer, Responder, get, post, web::{self, Data, Path}};
+use actix_web::{App, HttpResponse, HttpServer, Responder, delete, get, post, web::{self, Data, Path}};
 use serde::{Serialize, Deserialize};
 use serde_json::json;
 use std::{collections::{HashMap, VecDeque}, fmt::{self, Display, Formatter}, io::Result, process::Stdio, sync::Arc};
@@ -393,4 +393,33 @@ async fn stop_recorder(path: Path<u32>, shared_hashmap: ArtixRecorderHashmap) ->
 
     let job_status = JobStatus::from(&*job);
     HttpResponse::Ok().json(job_status)
+}
+
+#[delete("/api/recorder/stop/{job_id}")]
+async fn remove_recorder(path: Path<u32>, shared_hashmap: ArtixRecorderHashmap) -> impl Responder {
+    let job_id = path.into_inner();
+
+    let mut hashmap = shared_hashmap.lock().await;
+    let option_shared_job = hashmap.remove(&job_id);
+    drop(hashmap);
+
+    if option_shared_job.is_none() {
+        return HttpResponse::BadRequest().json(json!({
+            "message": "Job not found: job_id not valid"
+        }));
+    }
+
+    let shared_job: SharedJob = option_shared_job.unwrap();
+    let mut job = shared_job.lock().await;
+    let child = job.process.take();
+    drop(job);
+
+    if let Some(mut child) = child {
+        let _ = child.kill().await;
+        let _ = child.wait().await;
+    }
+    
+    HttpResponse::Ok().json(json!({
+        "message": "Recorder deleted successfully",
+    }))
 }
