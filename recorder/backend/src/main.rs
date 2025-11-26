@@ -151,17 +151,16 @@ fn to_scientific(num: u32) -> String {
 async fn main() -> Result<()> {
     let port: u16 = 5004;
 
-    let shared_hashmap: ArtixRecorderHashmap = 
-        Data::new(
-            Arc::new(
+    let shared_hashmap: SharedJobHashmap = 
+        Arc::new(
                 Mutex::new(
                     HashMap::<u32, SharedJob>::new()
-    )));
+    ));
 
     println!("Starting server on port {}", port);
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(shared_hashmap.clone()))
+            .app_data(Data::new(shared_hashmap.clone()))
             .service(status)
             .service(start_recorder)
             .service(stop_recorder)
