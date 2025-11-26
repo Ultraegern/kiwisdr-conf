@@ -173,7 +173,7 @@ async fn main() -> Result<()> {
     .await
 }
 
-#[get("/api")]
+#[get("/api/")]
 async fn status() -> impl Responder {
     HttpResponse::Ok().body(
         "Api is Online"
