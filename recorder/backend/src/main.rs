@@ -394,7 +394,7 @@ async fn stop_recorder(path: Path<u32>, shared_hashmap: ArtixRecorderHashmap) ->
     HttpResponse::Ok().json(job_status)
 }
 
-#[delete("/api/recorder/stop/{job_id}")]
+#[delete("/api/recorder/{job_id}")]
 async fn remove_recorder(path: Path<u32>, shared_hashmap: ArtixRecorderHashmap) -> impl Responder {
     let job_id = path.into_inner();
 
