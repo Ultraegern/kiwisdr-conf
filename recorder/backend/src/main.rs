@@ -227,14 +227,14 @@ async fn recorder_status_one(path: Path<u32>, shared_hashmap: ArtixRecorderHashm
 
 #[post("/api/recorder/start")]
 async fn start_recorder(request_settings_raw: ArtixRecorderSettings, shared_hashmap: ArtixRecorderHashmap) -> impl Responder {
-    const MAX_RECORDER_SLOTS: usize = 3;
+    const MAX_JOB_SLOTS: usize = 3;
     let settings = request_settings_raw.into_inner();
     { // Check if all recorder slots are full (Only start a new recorder if there is at least 1 empty slot)
         let hashmap = shared_hashmap.lock().await;
         let used_recorder_slots = hashmap.keys().len();
         drop(hashmap);
 
-        if used_recorder_slots >= MAX_RECORDER_SLOTS {
+        if used_recorder_slots >= MAX_JOB_SLOTS {
             return HttpResponse::BadRequest().json(json!({ 
                 "message": "All recorder slots are full",
             }));
@@ -268,6 +268,37 @@ async fn start_recorder(request_settings_raw: ArtixRecorderSettings, shared_hash
         }
     }
     
+    let shared_job_error: Result<SharedJob> = create_job(settings, (**shared_hashmap).clone()).await;
+    let shared_job: SharedJob;
+    match shared_job_error {
+        Ok(..) => shared_job = shared_job_error.unwrap(),
+        _ => return HttpResponse::InternalServerError().json(json!({ 
+                "message": "Error ID: poiujru08u740875ufgjrog0u9rfjgboidug",
+            })),
+    }
+
+    match spawn_recorder(shared_job.clone()).await {
+        Ok(..) => {},
+        _ => return HttpResponse::InternalServerError().json(json!({ 
+                "message": "Error ID: iorjoghehrguoojohb89y49785yhjh45iu6g",
+            })),
+        
+    }
+
+    let shared_job_clone = shared_job.clone(); 
+    let job_guard = shared_job_clone.lock().await;
+    let job_id = job_guard.job_id;
+    drop(job_guard);
+
+    let mut hashmap = shared_hashmap.lock().await;
+    hashmap.insert(job_id, shared_job.clone());
+    drop(hashmap);
+
+    let job_status = JobStatus::from(&*(shared_job.lock().await));
+    HttpResponse::Ok().json(job_status)
+}
+
+async fn create_job(settings: RecorderSettings, shared_hashmap: SharedJobHashmap) -> Result<SharedJob> {
     // Generate job_id
     let hashmap = shared_hashmap.lock().await;
     let job_id: u32 = (u32::MIN..u32::MAX)
@@ -275,7 +306,25 @@ async fn start_recorder(request_settings_raw: ArtixRecorderSettings, shared_hash
         .expect("Job ID space exhausted");
     drop(hashmap);
 
-    
+    let job = Job {
+        job_id: job_id,
+        running: true,
+        process: None,
+        started_at: None,
+        next_run_start: None,
+        logs: VecDeque::new(),
+        settings: settings,
+    };
+
+    let shared_job: SharedJob = Arc::new(Mutex::new(job));
+
+    Ok(shared_job)
+}
+
+async fn spawn_recorder(shared_job: SharedJob) -> Result<()> {
+    let mut job = shared_job.lock().await;
+
+    let settings = job.settings;
 
     let filename_common = format!("{}_Fq{}", Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string(), to_scientific(settings.frequency));
     let filename_png = format!("{}_Zm{}", filename_common, settings.zoom.to_string());
@@ -317,8 +366,14 @@ async fn start_recorder(request_settings_raw: ArtixRecorderSettings, shared_hash
         .current_dir("/usr/local/src/kiwiclient/")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()
-        .expect("Failed to start recorder process");
+        .spawn()?;
+
+    if let Some(stdout) = child.stdout.take() {
+        tokio::spawn(read_output(stdout, shared_job.clone(), "STDOUT", true));
+    }
+    if let Some(stderr) = child.stderr.take() {
+       tokio::spawn(read_output(stderr, shared_job.clone(), "STDERR", false));
+    }
 
     let now = Utc::now().timestamp() as u64;
     let started_at_log = Log {
@@ -329,39 +384,17 @@ async fn start_recorder(request_settings_raw: ArtixRecorderSettings, shared_hash
         timestamp: now,
         data: format!("<Settings>  {}", settings)
     };
-
-    let job = Job {
-        job_id: job_id,
-        running: true,
-        process: None,
-        started_at: Some(now),
-        next_run_start: match settings.interval {
-                Some(..) => Some(now + settings.interval.unwrap() as u64),
-                None => None,
-            },
-        logs: VecDeque::from(vec![started_at_log, started_settings_log]),
-        settings: settings,
+    
+    job.running = true;
+    job.process = Some(child);
+    job.started_at = Some(now);
+    job.next_run_start = match settings.interval {
+        Some(..) => Some(now + settings.interval.unwrap() as u64),
+        None => None,
     };
+    job.logs.append(&mut VecDeque::from(vec![started_at_log, started_settings_log]));
 
-    let shared_job: SharedJob = Arc::new(Mutex::new(job));
-
-    if let Some(stdout) = child.stdout.take() {
-        tokio::spawn(read_output(stdout, shared_job.clone(), "STDOUT", true));
-    }
-    if let Some(stderr) = child.stderr.take() {
-       tokio::spawn(read_output(stderr, shared_job.clone(), "STDERR", false));
-    }
-
-    let mut job2 = shared_job.lock().await;
-    job2.process = Some(child);
-    drop(job2);
-
-    let mut hashmap = shared_hashmap.lock().await;
-    hashmap.insert(job_id, shared_job.clone());
-    drop(hashmap);
-
-    let job_status = JobStatus::from(&*(shared_job.lock().await));
-    HttpResponse::Ok().json(job_status)
+    Ok(())
 }
 
 #[post("/api/recorder/stop/{job_id}")]
