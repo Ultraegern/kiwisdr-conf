@@ -124,7 +124,6 @@ async fn read_output(pipe: impl AsyncRead + Unpin, job: SharedJob, pipe_tag: &st
     if responsible_for_exit {
         let mut state = job.lock().await;
         state.running = false;
-        state.started_at = None;
         state.logs.push_back(Log {
             timestamp: Utc::now().timestamp() as u64, 
             data: "<Exited>".to_string()
@@ -236,8 +235,6 @@ async fn start_recorder(request_settings_raw: ArtixRecorderSettings, shared_hash
         if settings.zoom > 31 { // Prevent bitshifting a u32 by 32 bits
             return HttpResponse::BadRequest().json(json!({ 
                 "message": "Zoom to high",
-                "recording": false,
-                "started_at": Option::<u64>::None
             }));
         }
 
@@ -253,15 +250,11 @@ async fn start_recorder(request_settings_raw: ArtixRecorderSettings, shared_hash
         if selection_freq_max > MAX_FREQ {
             return HttpResponse::BadRequest().json(json!({ 
                 "message": "The selected frequency range exceeds the maximum frequency",
-                "recording": false,
-                "started_at": Option::<u64>::None
             }));
         }
         if selection_freq_min < MIN_FREQ as i64 {
             return HttpResponse::BadRequest().json(json!({ 
                 "message": "The selected frequency range exceeds the minimum frequency",
-                "recording": false,
-                "started_at": Option::<u64>::None
             }));
         }
     }
