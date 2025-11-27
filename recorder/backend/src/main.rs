@@ -35,21 +35,27 @@ struct RecorderSettings {
     frequency: u32, // Hz
     #[serde(default)] // defaults zoom to 0 if not provided
     zoom: u8,
-    autostop: u16 // Sec, O if off
+    duration: u16, // 0 == inf
+    #[serde(default)]
+    interval: Option<u32>, // None == once
 }
 
 impl Display for RecorderSettings {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Type: {}, Frequency: {} Hz, {}Autostop: {}",
+            "Type: {}, Frequency: {} Hz, {}{}, for {} sec",
             self.rec_type,
             self.frequency,
             match self.rec_type {
-                RecordingType::PNG => format!("Zoom: {} ", self.zoom),
-                RecordingType::IQ => "".to_string()
+                RecordingType::PNG => format!("Zoom: {}, ", self.zoom),
+                RecordingType::IQ => "".to_string(),
             },
-            if self.autostop == 0 { String::from("Off") } else { format!("{} sec", self.autostop.to_string()) }
+            match self.interval {
+                Some(..) => format!("Every {} sec", self.interval.unwrap()),
+                None => "Once".to_string(),
+            },
+            self.duration,
         )
     }
 }
@@ -61,6 +67,7 @@ struct JobStatus {
     job_id: u32,
     running: bool,
     started_at: Option<u64>,
+    next_run_start: Option<u64>,
     logs: Logs,
     settings: RecorderSettings,
 }
@@ -73,6 +80,7 @@ impl From<&Job> for JobStatus {
             job_id: value.job_id,
             running: value.running,
             started_at: value.started_at,
+            next_run_start: value.next_run_start,
             logs: value.logs.iter()
                 .rev() // start from the newest
                 .take(LOG_COUNT)
@@ -99,6 +107,7 @@ struct Job {
     running: bool,
     process: Option<Child>,
     started_at: Option<u64>,
+    next_run_start: Option<u64>,
     logs: Logs,
     settings: RecorderSettings,
 }
@@ -298,8 +307,8 @@ async fn start_recorder(request_settings_raw: ArtixRecorderSettings, shared_hash
             "--modulation=iq".to_string()]
     };
 
-    if settings.autostop != 0 {
-        args.push(format!("--time-limit={}", settings.autostop));
+    if settings.duration != 0 {
+        args.push(format!("--time-limit={}", settings.duration));
     }
 
     let mut child: Child = tokio::process::Command::new("python3")
@@ -326,6 +335,10 @@ async fn start_recorder(request_settings_raw: ArtixRecorderSettings, shared_hash
         running: true,
         process: None,
         started_at: Some(now),
+        next_run_start: match settings.interval {
+                Some(..) => Some(now + settings.interval.unwrap() as u64),
+                None => None,
+            },
         logs: VecDeque::from(vec![started_at_log, started_settings_log]),
         settings: settings,
     };
