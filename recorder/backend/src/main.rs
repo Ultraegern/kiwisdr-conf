@@ -166,6 +166,7 @@ async fn main() -> Result<()> {
                     HashMap::<u32, SharedJob>::new()
     ));
 
+    println!("Starting Job Scheduler");
     spawn(job_scheduler(shared_hashmap.clone()));
 
     println!("Starting server on port {}", port);
