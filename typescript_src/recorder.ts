@@ -1,21 +1,26 @@
-const API_BASE = "https://kiwisdr.local/api";
+const API_BASE_URL = "https://kiwisdr.local/api";
 const MIN_FREQ = 0;
 const MAX_FREQ = 30_000_000;
 const MAX_ZOOM = 14;
+const REFRESH_INTERVAL_MS = 5000;
+
+// --- DOM Elements ---
+const apiStatusEl = document.getElementById('api-status') as HTMLBodyElement;
+const createJobForm = document.getElementById('create-job-form') as HTMLFormElement;
+const createJobBtn = document.getElementById('create-job-btn') as HTMLButtonElement;
+const jobsTableBody = document.getElementById('jobs-table-body') as HTMLTableElement;
+
+// Form inputs
+const recTypeInput = document.getElementById('rec_type') as HTMLSelectElement;
+const frequencyInput = document.getElementById('frequency') as HTMLInputElement;
+const zoomInput = document.getElementById('zoom') as HTMLInputElement;
+const durationInput = document.getElementById('duration') as HTMLInputElement;
+const intervalInput = document.getElementById('interval') as HTMLInputElement;
+const freqRangeEl = document.getElementById('freq-range') as HTMLInputElement;
+
 let is_recording = false, start_error = false
 
 function updateBandwidthInfo() {
-    const type = (document.getElementById('typeSelect')! as HTMLSelectElement).value;
-    const zoomInput = document.getElementById('zoomInput') as HTMLInputElement;
-    const zoom = parseInt(zoomInput.value, 10);
-    const freqInput = parseFloat((document.getElementById('freqInput')! as HTMLInputElement).value) * 1000; // kHz → Hz
-    
-    const bandwidthLine = document.getElementById('bandwidthLine')! as HTMLBodyElement;
-    const minFreqLine = document.getElementById('minFreqLine')! as HTMLBodyElement;
-    const maxFreqLine = document.getElementById('maxFreqLine')! as HTMLBodyElement;
-    const zoomWarning = document.getElementById('zoomWarning')! as HTMLBodyElement;
-    const startBtn = document.getElementById('startBtn')! as HTMLButtonElement;
-
     const { bandwidth, selection_freq_min, selection_freq_max, zoom_invalid, error_messages } = calcFreqRange(freqInput, zoom, type)
     
     if (error_messages.length > 0) {
@@ -220,7 +225,6 @@ async function stopRecording() {
     }
 }
 
-const apiStatusEl = document.getElementById('api-status') as HTMLBodyElement;
 async function checkApiStatus() {
     try {
         const response = await fetch(`${API_BASE}/`);

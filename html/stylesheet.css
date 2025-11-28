@@ -75,6 +75,13 @@ button:disabled {
   width: 350px;
 }
 .field-group {
+  background-color: var(--main-color-medium);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: var(--main-shadow-dark-small);
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -288,6 +295,9 @@ input:disabled {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 8px var(--accent-color-shadow);
+  }
+  .field-group {
+    background-color: var(--main-color-light);
   }
   table {
     background-color: var(--main-color-light);
