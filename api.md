@@ -14,9 +14,18 @@ Defines the parameters for a new recording job.
  | ----- | ----- | ----- | ----- | ----- | 
 | `rec_type` | `string` (`"png"` or `"iq"`) | The type of recording output. | Yes | \- | 
 | `frequency` | `u32` (Hz) | The center frequency for the recording. | Yes | \- | 
-| `zoom` | `u8` | Zoom level for PNG recordings (0-31). Ignored for IQ. | No | `0` | 
+| `zoom` | `u8` | Zoom level for PNG recordings (0-14). Ignored for IQ. | No | `0` | 
 | `duration` | `u16` (seconds) | The length of the recording. `0` means infinite duration (until manually stopped). | Yes | \- | 
 | `interval` | `Option<u32>` (seconds) | If set, the job will restart every `interval` seconds after the previous run finishes. `null` or omission means the job runs once. | No | `null` | 
+
+Freq's are calculated like this:
+```
+MIN_FREQ = 0;
+MAX_FREQ = 30_000_000;
+bandwidth = (MAX_FREQ - MIN_FREQ) / 2 ^ zoom; 
+selection_freq_max = center_freq + (bandwidth / 2);
+selection_freq_min = center_freq - (bandwidth / 2);
+```
 
 **Example JSON Request Body:**
 ```json
@@ -36,7 +45,7 @@ A single log entry captured from the running KiwiSDR process (stdout/stderr).
 | **Field Name** | **Type** | **Description** | 
  | ----- | ----- | ----- | 
 | `timestamp` | `u64` (Unix) | The time the log entry was captured. | 
-| `data` | `string` | The log message (truncated to 200 characters in `JobStatus`). | 
+| `data` | `string` | The log message (truncated to 200 characters). | 
 
 ### 3. `JobStatus` (Response/Output)
 
@@ -46,10 +55,10 @@ The current state and metadata of a recorder job.
  | ----- | ----- | ----- | 
 | `job_id` | `u32` | Unique identifier for the job. | 
 | `running` | `boolean` | `true` if the job's child process is currently active. | 
-| `started_at` | `Option<u64>` (Unix) | Timestamp when the current run started. `null` if not running. | 
+| `started_at` | `Option<u64>` (Unix) | Timestamp when the current/last run started. `null` if no run has started. | 
 | `next_run_start` | `Option<u64>` (Unix) | Expected time (if interval is set) for the next run. `null` if it's a one-time job or has no future runs scheduled. | 
-| `logs` | `Array<Log>` | A deque of the most recent log entries (up to 20). | 
-| `settings` | `RecorderSettings` | The immutable settings used to create the job. | 
+| `logs` | `Array<Log>` | A deque of the most recent log entries (truncated to 20 Log's). | 
+| `settings` | `RecorderSettings` | The job's settings. | 
 
 ## API Endpoints
 
@@ -90,7 +99,7 @@ The current state and metadata of a recorder job.
 
 | **Method** | **Path** | **Description** | 
  | ----- | ----- | ----- | 
-| `GET` | `/api/recorder/status/{job_id}` | Retrieves the detailed status for a specific job. | 
+| `GET` | `/api/recorder/status/{job_id}` | Retrieves the status for a specific job. | 
 
 **Path Parameters:**
 
@@ -103,7 +112,7 @@ The current state and metadata of a recorder job.
 
 | **Method** | **Path** | **Description** | 
  | ----- | ----- | ----- | 
-| `POST` | `/api/recorder/stop/{job_id}` | Sends a kill signal to the running child process, stopping the current recording. If the job has an `interval` set, it will be automatically rescheduled by the job scheduler for the next run time. | 
+| `POST` | `/api/recorder/stop/{job_id}` | Sends a kill signal to the running child process, stopping the current recording. If the job has an `interval` set, it will be automatically started by the job scheduler for the next run. | 
 
 **Path Parameters:**
 
