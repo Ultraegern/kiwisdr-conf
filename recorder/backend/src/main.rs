@@ -227,7 +227,7 @@ async fn job_scheduler(shared_hashmap: SharedJobHashmap) {
 #[get("/api/")]
 async fn status() -> impl Responder {
     HttpResponse::Ok().body(
-        "Api is Online"
+        "Online"
     )
 }
 
