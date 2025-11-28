@@ -1,4 +1,4 @@
-const API_BASE = "/api";
+const API_BASE = "https://kiwisdr.local/api";
 const MIN_FREQ = 0;
 const MAX_FREQ = 30_000_000;
 const MAX_ZOOM = 14;
@@ -220,6 +220,23 @@ async function stopRecording() {
     }
 }
 
+const apiStatusEl = document.getElementById('api-status') as HTMLBodyElement;
+async function checkApiStatus() {
+    try {
+        const response = await fetch(`${API_BASE}/`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const text = await response.text();
+        apiStatusEl.textContent = `API Status: ${text}`;
+        apiStatusEl.className = 'online';
+    } catch (error) {
+        console.error('API status check failed:', error);
+        apiStatusEl.textContent = 'API Status: OFFLINE';
+        apiStatusEl.className = 'offline';
+    }
+}
+
+checkApiStatus();
 getRecorderStatus();
 setInterval(getRecorderStatus, 1000);
 

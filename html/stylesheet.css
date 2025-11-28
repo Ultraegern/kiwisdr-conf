@@ -231,6 +231,24 @@ input:disabled {
   gap: 8px;
   justify-content: flex-end;
 }
+#api-status {
+  font-size: 0.9em;
+  padding: 5px 10px;
+  border-radius: 6px;
+  box-shadow: var(--main-color-dark);
+}
+#api-status.checking {
+  background-color: var(--main-color-medium);
+  color: var(--text-color-muted);
+}
+#api-status.online {
+  background-color: #28a745;
+  color: white;
+}
+#api-status.offline {
+  background-color: #c72828;
+  color: white;
+}
 @media (prefers-color-scheme: light) { /* Light theme (if system prefers light) */
   .background {
     background: linear-gradient(-45deg, #efa0ae, #d7b0be, #a0d1e5, #b0e5b7);
