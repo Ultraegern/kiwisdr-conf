@@ -2,7 +2,7 @@ use actix_web::{App, HttpResponse, HttpServer, Responder, delete, get, post, web
 use serde::{Serialize, Deserialize};
 use serde_json::json;
 use std::{collections::{HashMap, VecDeque}, fmt::{self, Display, Formatter}, io::Result, process::Stdio, sync::Arc};
-use tokio::{process::Child, sync::Mutex, io::{AsyncBufReadExt, BufReader, AsyncRead}};
+use tokio::{spawn, time::{Duration, sleep}, process::Child, sync::{Mutex, MutexGuard}, io::{AsyncBufReadExt, BufReader, AsyncRead}};
 use chrono::Utc;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -112,6 +112,7 @@ struct Job {
     settings: RecorderSettings,
 }
 
+type LockedJob<'a> = MutexGuard<'a, Job>;
 type SharedJob = Arc<Mutex<Job>>;
 type SharedJobHashmap =  Arc<Mutex<HashMap<u32, SharedJob>>>;
 type ArtixRecorderHashmap = web::Data<SharedJobHashmap>;    
@@ -120,7 +121,7 @@ async fn read_output(pipe: impl AsyncRead + Unpin, job: SharedJob, pipe_tag: &st
     let reader = BufReader::new(pipe);
     let mut lines = reader.lines();
     while let Ok(Some(line)) = lines.next_line().await {
-        let mut state = job.lock().await;
+        let mut state: LockedJob = job.lock().await;
         state.logs.push_back(Log {
             timestamp: Utc::now().timestamp() as u64, 
             data: format!("<{}> {}", pipe_tag, line)
@@ -131,7 +132,7 @@ async fn read_output(pipe: impl AsyncRead + Unpin, job: SharedJob, pipe_tag: &st
 
     }
     if responsible_for_exit {
-        let mut state = job.lock().await;
+        let mut state: LockedJob = job.lock().await;
         state.running = false;
         state.logs.push_back(Log {
             timestamp: Utc::now().timestamp() as u64, 
@@ -165,6 +166,8 @@ async fn main() -> Result<()> {
                     HashMap::<u32, SharedJob>::new()
     ));
 
+    spawn(job_scheduler(shared_hashmap.clone()));
+
     println!("Starting server on port {}", port);
     HttpServer::new(move || {
         App::new()
@@ -178,6 +181,43 @@ async fn main() -> Result<()> {
     .bind(("0.0.0.0", port))?
     .run()
     .await
+}
+
+async fn job_scheduler(shared_hashmap: SharedJobHashmap) {
+    const CHECK_INTERVAL: Duration = Duration::from_secs(1);
+    loop {
+        let now = Utc::now().timestamp() as u64;
+        let mut jobs: Vec<SharedJob>;
+        let mut jobs_to_start: Vec<SharedJob> = Vec::new();
+
+        let hashmap = shared_hashmap.lock().await;
+        let keys = hashmap.keys();
+        jobs = Vec::with_capacity(keys.len());
+        for key in keys {
+            jobs.push(hashmap.get(key).unwrap().clone())
+        }
+        drop(hashmap);
+
+        for shared_job in jobs {
+            let job: LockedJob = shared_job.lock().await;
+            
+            if !job.running && job.next_run_start.unwrap_or(0) <= now {
+                if job.process.is_none() {
+                    jobs_to_start.push(shared_job.clone());
+                }
+            }
+            drop(job) // Gemini says that variables dont die at the end of for bloks
+        }
+
+        for job in jobs_to_start {
+            match spawn_recorder(job).await {
+                Ok(..) => {},
+                Err(err) => println!("Error id: joi8u4398thn98yg9fddogih. Error info: {}", err),
+            };
+        }
+
+        sleep(CHECK_INTERVAL).await;
+    }
 }
 
 #[get("/api/")]
@@ -199,7 +239,7 @@ async fn recorder_status_all(shared_hashmap: ArtixRecorderHashmap) -> impl Respo
 
     let mut jobs: Vec<JobStatus> = Vec::new();
     for locked_job in locked_jobs {
-        let job_guard = locked_job.lock().await;
+        let job_guard: LockedJob = locked_job.lock().await;
         let job_status = JobStatus::from(&*job_guard);
         drop(job_guard);
         jobs.push(job_status);
@@ -286,7 +326,7 @@ async fn start_recorder(request_settings_raw: ArtixRecorderSettings, shared_hash
     }
 
     let shared_job_clone = shared_job.clone(); 
-    let job_guard = shared_job_clone.lock().await;
+    let job_guard: LockedJob = shared_job_clone.lock().await;
     let job_id = job_guard.job_id;
     drop(job_guard);
 
@@ -322,7 +362,7 @@ async fn create_job(settings: RecorderSettings, shared_hashmap: SharedJobHashmap
 }
 
 async fn spawn_recorder(shared_job: SharedJob) -> Result<()> {
-    let mut job = shared_job.lock().await;
+    let mut job: LockedJob = shared_job.lock().await;
 
     let settings = job.settings;
 
@@ -413,7 +453,7 @@ async fn stop_recorder(path: Path<u32>, shared_hashmap: ArtixRecorderHashmap) ->
 
     let shared_job: SharedJob = option_shared_job.unwrap();
 
-    let mut job = shared_job.lock().await;
+    let mut job: LockedJob = shared_job.lock().await;
     let child = job.process.take();
     drop(job);
 
@@ -422,7 +462,7 @@ async fn stop_recorder(path: Path<u32>, shared_hashmap: ArtixRecorderHashmap) ->
         let _ = child.wait().await;
     }
 
-    let mut job = shared_job.lock().await;
+    let mut job: LockedJob = shared_job.lock().await;
     job.process = None;
     job.logs.push_back(Log {
         timestamp: Utc::now().timestamp() as u64,
@@ -448,7 +488,7 @@ async fn remove_recorder(path: Path<u32>, shared_hashmap: ArtixRecorderHashmap) 
     }
 
     let shared_job: SharedJob = option_shared_job.unwrap();
-    let mut job = shared_job.lock().await;
+    let mut job: LockedJob = shared_job.lock().await;
     let child = job.process.take();
     drop(job);
 
