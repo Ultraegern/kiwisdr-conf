@@ -5,7 +5,7 @@ use std::{collections::{HashMap, VecDeque}, fmt::{self, Display, Formatter}, io:
 use tokio::{spawn, time::{Duration, sleep}, process::Child, sync::{Mutex, MutexGuard}, io::{AsyncBufReadExt, BufReader, AsyncRead}};
 use chrono::Utc;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 struct Log {
     timestamp: u64, // Unix
     data: String
@@ -13,7 +13,7 @@ struct Log {
 
 type Logs = VecDeque<Log>;
 
-#[derive(Deserialize, Serialize, Clone, Copy)]
+#[derive(Deserialize, Serialize, Clone, Copy, Debug)]
 #[serde(rename_all = "lowercase")]
 enum RecordingType {
     PNG,
@@ -29,7 +29,7 @@ impl Display for RecordingType {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone, Copy)]
+#[derive(Deserialize, Serialize, Clone, Copy, Debug)]
 struct RecorderSettings {
     rec_type: RecordingType,
     frequency: u32, // Hz
@@ -102,6 +102,7 @@ impl From<&Job> for JobStatus {
     }
 }
 
+#[derive(Debug)]
 struct Job {
     job_id: u32,
     running: bool,
@@ -162,9 +163,9 @@ async fn main() -> Result<()> {
 
     let shared_hashmap: SharedJobHashmap = 
         Arc::new(
-                Mutex::new(
-                    HashMap::<u32, SharedJob>::new()
-    ));
+            Mutex::new(
+                HashMap::<u32, SharedJob>::new()
+        ));
 
     println!("Starting Job Scheduler");
     spawn(job_scheduler(shared_hashmap.clone()));
@@ -178,13 +179,14 @@ async fn main() -> Result<()> {
             .service(stop_recorder)
             .service(recorder_status_all)
             .service(recorder_status_one)
-    })
-    .bind(("0.0.0.0", port))?
-    .run()
-    .await
+        })
+        .bind(("0.0.0.0", port))?
+        .run()
+        .await
 }
 
 async fn job_scheduler(shared_hashmap: SharedJobHashmap) {
+    println!("Job Scheduler Started Sucessfully");
     const CHECK_INTERVAL: Duration = Duration::from_secs(1);
     loop {
         let now = Utc::now().timestamp() as u64;
@@ -209,6 +211,7 @@ async fn job_scheduler(shared_hashmap: SharedJobHashmap) {
             }
             drop(job) // Gemini says that variables dont die at the end of for bloks
         }
+        println!("Jobs to start: {:?}", jobs_to_start);
 
         for job in jobs_to_start {
             match spawn_recorder(job).await {
