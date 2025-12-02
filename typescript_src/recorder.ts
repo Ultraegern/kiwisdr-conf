@@ -20,6 +20,34 @@ const zoomInput = document.getElementById('zoom') as HTMLInputElement;
 const durationInput = document.getElementById('duration') as HTMLInputElement;
 const intervalInput = document.getElementById('interval') as HTMLInputElement;
 
+type RecordingType = 'png' | 'iq';
+
+interface Log {
+    timestamp: number;
+    data: string;
+}
+
+type Logs = Log[];
+
+interface RecorderSettings {
+    rec_type: RecordingType;
+    frequency: number;
+    zoom?: number;
+    duration: number;
+    interval?: number | null;
+}
+
+interface Job {
+    job_id: number;
+    running: boolean;
+    started_at: number | null;
+    next_run_start: number | null;
+    logs: Logs;
+    settings: RecorderSettings;
+}
+
+type JobList = Job[];
+
 let is_recording = false, start_error = false
 
 function updateBandwidthInfo() {
@@ -114,12 +142,6 @@ function calcFreqRange(center_freq_hz: number, zoom: number, mode: string) { // 
     return { bandwidth: bandwidth, selection_freq_min: selection_freq_min, selection_freq_max: selection_freq_max, freq_range_invalid: freq_range_invalid, zoom_invalid: false, error_messages: error_messages };
 }
 
-function handleTypeChange() {
-    const type = (document.getElementById('typeSelect')! as HTMLSelectElement).value;
-    const zoomInput = document.getElementById('zoomInput') as HTMLInputElement;
-    zoomInput.disabled = (type !== 'png');
-}
-
 function format_freq(freq_hz: number) {
     if (Math.abs(freq_hz) < 1000) {
         let freq_hz_str = freq_hz.toFixed(0)
@@ -135,14 +157,63 @@ function format_freq(freq_hz: number) {
     }
 }
 
-async function getRecorderStatus() {
+function formatTime(unixTime: number | null) {
+    if (unixTime == null) {
+        return "None"
+    }
+    const date = new Date((unixTime * 1000));
+    return date.toLocaleString(undefined, { hour12: false })
+}
+
+async function getAllJobStatus() {
     try {
         const response = await fetch(`${API_URL}/recorder/status`);
-        const data = await response.json();
-        console.log(data);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const joblist: JobList = await response.json();
+        renderJobList(joblist);
     }
     catch (err) {
         console.error("Failed to fetch recorder status:", err);
+    }
+}
+
+async function renderJobList(jobs: JobList) {
+    jobsTableBody.innerHTML = ''; // Clear existing table
+
+    if (jobs.length == 0) {
+        jobsTableBody.innerHTML = `<tr><td colspan="10" style="text-align:center;">No active jobs found.</td></tr>`;
+        return;
+    }
+
+    for (const job of jobs) {
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-job-id', `${job.job_id}`);
+        
+        const statusText: string = job.running ? 'Recording' : 'Stoped';
+        const statusColor: string = job.running ? 'var(--green)' : 'var(--red)';
+        const settings: string = 
+        `
+        <br>Freq: ${job.settings.rec_type}</br>
+        <br>Freq: ${format_freq(job.settings.frequency)}</br>
+        `;
+        
+        tr.innerHTML = `
+            <td>${job.job_id}</td>
+            <td style="color: ${statusColor}; font-weight: bold;">${statusText}</td>
+            <td>${settings}</td>
+            <td>${formatTime(job.started_at)}</td>
+            <td>${formatTime(job.next_run_start)}</td>
+            <td>
+                <div class="button-group">
+                    <button class="btn-stop" data-job-id="${job.job_id}" ${!job.running ? 'disabled' : ''}>Stop</button>
+                    <button class="btn-logs" data-job-id="${job.job_id}">Logs</button>
+                    <button class="btn-remove" data-job-id="${job.job_id}">Remove</button>
+                </div>
+            </td>
+        `;
+        jobsTableBody.appendChild(tr);
     }
 }
 
@@ -164,7 +235,7 @@ async function handleCreateJob(event: SubmitEvent) {
         });
         const data = await response.json();
         console.log(data);
-        await getRecorderStatus();
+        await getAllJobStatus();
     } catch (err) {
         warningEl.textContent = `Failed to start recorder. Error: ${err}`;
     }
@@ -187,8 +258,8 @@ async function checkApiStatus() {
 
 document.addEventListener('DOMContentLoaded', () => {
     checkApiStatus();
-    getRecorderStatus();
-    setInterval(getRecorderStatus, REFRESH_INTERVAL_MS);
+    getAllJobStatus();
+    setInterval(getAllJobStatus, REFRESH_INTERVAL_MS);
 
     // Update bandwidth info when freq or zoom changes
     frequencyInput.addEventListener('input', updateBandwidthInfo);

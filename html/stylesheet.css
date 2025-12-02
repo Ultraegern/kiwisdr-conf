@@ -6,6 +6,8 @@
   --main-color-dark: #1e1e1e;
   --main-color-medium: #2a2a2a;
   --main-color-light: #555555;
+  --green: #28a745;
+  --red: #c72828;
   --accent-color: #ff5555;
   --accent-color-shadow: rgba(255, 85, 85, 0.5);
   --text-color-bright: #fafafa;
@@ -249,11 +251,11 @@ input:disabled {
   color: var(--text-color-muted);
 }
 #api-status.online {
-  background-color: #28a745;
+  background-color: var(--green);
   color: white;
 }
 #api-status.offline {
-  background-color: #c72828;
+  background-color: var(--red);
   color: white;
 }
 .job-status-div {
