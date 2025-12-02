@@ -5,13 +5,13 @@ const MAX_ZOOM = 14;
 const REFRESH_INTERVAL_MS = 5000;
 
 // --- DOM Elements ---
-const apiStatusEl = document.getElementById('api-status') as HTMLBodyElement;
+const apiStatusEl = document.getElementById('api-status') as HTMLSpanElement;
 const createJobForm = document.getElementById('create-job-form') as HTMLFormElement;
 const createJobBtn = document.getElementById('create-job-btn') as HTMLButtonElement;
-const jobsTableBody = document.getElementById('jobs-table-body') as HTMLTableElement;
-const freqRangeEl = document.getElementById('freq-range') as HTMLBodyElement;
-const bandwidthEl = document.getElementById('bandwith') as HTMLBodyElement;
-const warningEl = document.getElementById('warning') as HTMLBodyElement;
+const jobsTableBody = document.getElementById('jobs-table-body') as HTMLTableSectionElement;
+const freqRangeEl = document.getElementById('freq-range') as HTMLDivElement;
+const bandwidthEl = document.getElementById('bandwidth') as HTMLDivElement;
+const warningEl = document.getElementById('warning') as HTMLDivElement;
 
 // Form inputs
 const recTypeInput = document.getElementById('rec_type') as HTMLSelectElement;
@@ -54,11 +54,11 @@ function updateBandwidthInfo() {
     const { bandwidth, selection_freq_min, selection_freq_max, zoom_invalid, error_messages } = calcFreqRange(Number(frequencyInput.value) * 1000, Number(zoomInput.value), recTypeInput.value)
     
     if (error_messages.length > 0) {
-        warningEl.textContent = error_messages.join('<br><br>');
+        warningEl.innerHTML = error_messages.join('<br>');
         start_error = true
         createJobBtn.disabled = is_recording || start_error;
     } else {
-        warningEl.textContent = '';
+        warningEl.innerHTML = '';
         start_error = false
         createJobBtn.disabled = is_recording || start_error;
     }
@@ -101,7 +101,7 @@ function isZoomValid(zoom: number) {
     return {zoom_valid: zoom_valid, zoom_error_messages: zoom_error_messages};
 }
 
-function calcFreqRange(center_freq_hz: number, zoom: number, mode: string) { // Int, Int, Str => Band: Int, Min: Int, Max: Int, Invalid: bool, error: []
+function calcFreqRange(center_freq_hz: number, zoom: number, mode: string) {
     let bandwidth = 0, selection_freq_min = 0, selection_freq_max = 0, freq_range_invalid = false, error_messages = [];
 
     const { nr_valid, nr_error_messages } = isNrValid(center_freq_hz, "Frequency")
@@ -180,7 +180,7 @@ async function getAllJobStatus() {
 }
 
 async function renderJobList(jobs: JobList) {
-    jobsTableBody.innerHTML = ''; // Clear existing table
+    jobsTableBody.innerHTML = '';
 
     if (jobs.length == 0) {
         jobsTableBody.innerHTML = `<tr><td colspan="10" style="text-align:center;">No active jobs found.</td></tr>`;
@@ -192,17 +192,23 @@ async function renderJobList(jobs: JobList) {
         tr.setAttribute('data-job-id', `${job.job_id}`);
         
         const statusText: string = job.running ? 'Recording' : 'Stoped';
-        const statusColor: string = job.running ? 'var(--green)' : 'var(--red)';
-        const settings: string = 
-        `
-        <br>Freq: ${job.settings.rec_type}</br>
-        <br>Freq: ${format_freq(job.settings.frequency)}</br>
-        `;
+        const statusColor: string = job.running ? 'var(--green)' : 'var(--accent-color)';
+        
+        let settingsHTML = `Type: ${job.settings.rec_type}<br>`;
+        settingsHTML += `Freq: ${format_freq(job.settings.frequency)}<br>`;
+        settingsHTML += `Duration: ${job.settings.duration}s`;
+
+        if (job.settings.rec_type === 'png') {
+            settingsHTML += `<br>Zoom: ${job.settings.zoom}`;
+        }
+        if (job.settings.interval) {
+            settingsHTML += `<br>Interval: ${job.settings.interval}s`;
+        }
         
         tr.innerHTML = `
             <td>${job.job_id}</td>
             <td style="color: ${statusColor}; font-weight: bold;">${statusText}</td>
-            <td>${settings}</td>
+            <td style="white-space: nowrap;">${settingsHTML}</td>
             <td>${formatTime(job.started_at)}</td>
             <td>${formatTime(job.next_run_start)}</td>
             <td>
@@ -219,11 +225,12 @@ async function renderJobList(jobs: JobList) {
 
 async function handleCreateJob(event: SubmitEvent) {
     event.preventDefault();
-    const rec_type = recTypeInput.value;
+    const rec_type = recTypeInput.value as RecordingType;
     const frequency = Math.round(parseFloat(frequencyInput.value) * 1000);
-    const zoom = parseInt(zoomInput.value, 10);
+    const zoom = rec_type === 'png' ? parseInt(zoomInput.value, 10) : undefined;
     const duration = parseInt(durationInput.value, 10);
-    const interval = parseInt(intervalInput.value, 10);
+    const intervalVal = parseInt(intervalInput.value, 10);
+    const interval = isNaN(intervalVal) ? null : intervalVal;
 
     const body = { rec_type, frequency, zoom, duration, interval };
 
@@ -237,7 +244,7 @@ async function handleCreateJob(event: SubmitEvent) {
         console.log(data);
         await getAllJobStatus();
     } catch (err) {
-        warningEl.textContent = `Failed to start recorder. Error: ${err}`;
+        warningEl.innerHTML = `Failed to start recorder. Error: ${err}`;
     }
 }
 
@@ -264,6 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update bandwidth info when freq or zoom changes
     frequencyInput.addEventListener('input', updateBandwidthInfo);
     zoomInput.addEventListener('change', updateBandwidthInfo);
+    recTypeInput.addEventListener('change', updateBandwidthInfo); // Added listener for rec_type change
     createJobForm.addEventListener('submit', handleCreateJob)
     updateBandwidthInfo();
 });

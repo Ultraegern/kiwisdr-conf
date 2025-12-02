@@ -237,6 +237,7 @@ input:disabled {
 }
 .button-group {
   display: flex;
+  flex-direction: column;
   gap: 8px;
   justify-content: flex-end;
 }
