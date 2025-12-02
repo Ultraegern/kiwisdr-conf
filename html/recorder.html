@@ -39,29 +39,37 @@
           <input type="number" id="interval" name="interval" step="1" placeholder="Once" min="60" max="86400">
         </div>
         <div id="freq-range">
-          Range: ---- Hz - ---- Hz \n Bandwidth: ---- Hz
+          Range: ---- Hz - ---- Hz 
+        </div>
+        <div id="bandwidth"> 
+          Bandwidth: ---- Hz
+        </div>
+        <div id="warning" class="warning"> 
+          
         </div>
         <button type="submit" id="create-job-btn">Start Job</button>
       </div>
-  </form>
-
-    <div id="messageBox" style="margin-top: 20px; font-weight: bold; color: var(--text-color-muted);"></div>
-
-    <div id="statusBox" style="margin-top: 20px;">
-      <h2 style="color: var(--text-color)">Status: <span style="color: var(--accent-color)" id="recorderStatus">Loading...</span></h2>
-      <p id="startedAt"></p>
-    </div>
-
-    <div class="table-container" id="logsContainer" style="display:none;">
-      <table>
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>Log</th>
-          </tr>
-        </thead>
-        <tbody id="logTableBody"></tbody>
-      </table>
+    </form>
+    
+    <div class="job-status-div">
+      <h2>Active Jobs</h2>
+      <div class="table-container">
+        <table id="jobs-table">
+          <thead>
+            <tr>
+              <th>Job ID</th>
+              <th>Status</th>
+              <th>Settings</th>
+              <th>Started</th>
+              <th>Next Run</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="jobs-table-body">
+            <!-- Jobs will be populated here by JS -->
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 

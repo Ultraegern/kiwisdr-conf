@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://kiwisdr.local/api";
+const API_URL = "https://kiwisdr.local/api";
 const MIN_FREQ = 0;
 const MAX_FREQ = 30_000_000;
 const MAX_ZOOM = 14;
@@ -9,6 +9,9 @@ const apiStatusEl = document.getElementById('api-status') as HTMLBodyElement;
 const createJobForm = document.getElementById('create-job-form') as HTMLFormElement;
 const createJobBtn = document.getElementById('create-job-btn') as HTMLButtonElement;
 const jobsTableBody = document.getElementById('jobs-table-body') as HTMLTableElement;
+const freqRangeEl = document.getElementById('freq-range') as HTMLBodyElement;
+const bandwidthEl = document.getElementById('bandwith') as HTMLBodyElement;
+const warningEl = document.getElementById('warning') as HTMLBodyElement;
 
 // Form inputs
 const recTypeInput = document.getElementById('rec_type') as HTMLSelectElement;
@@ -16,34 +19,28 @@ const frequencyInput = document.getElementById('frequency') as HTMLInputElement;
 const zoomInput = document.getElementById('zoom') as HTMLInputElement;
 const durationInput = document.getElementById('duration') as HTMLInputElement;
 const intervalInput = document.getElementById('interval') as HTMLInputElement;
-const freqRangeEl = document.getElementById('freq-range') as HTMLInputElement;
 
 let is_recording = false, start_error = false
 
 function updateBandwidthInfo() {
-    const { bandwidth, selection_freq_min, selection_freq_max, zoom_invalid, error_messages } = calcFreqRange(freqInput, zoom, type)
+    const { bandwidth, selection_freq_min, selection_freq_max, zoom_invalid, error_messages } = calcFreqRange(Number(frequencyInput.value) * 1000, Number(zoomInput.value), recTypeInput.value)
     
     if (error_messages.length > 0) {
-        zoomWarning.style.display = 'block';
-        zoomWarning.innerHTML = error_messages.join('<br><br>');
+        warningEl.textContent = error_messages.join('<br><br>');
         start_error = true
-        startBtn.disabled = is_recording || start_error;
+        createJobBtn.disabled = is_recording || start_error;
     } else {
-        zoomWarning.style.display = 'none';
+        warningEl.textContent = '';
         start_error = false
-        startBtn.disabled = is_recording || start_error;
+        createJobBtn.disabled = is_recording || start_error;
     }
-
     if (!zoom_invalid) {
-        bandwidthLine.textContent = "Bandwidth: " + format_freq(bandwidth);
-        minFreqLine.textContent = "Min: " + format_freq(selection_freq_min);
-        maxFreqLine.textContent = "Max: " + format_freq(selection_freq_max);
-    
+        bandwidthEl.textContent = "Bandwidth: " + format_freq(bandwidth);
+        freqRangeEl.textContent = "Range: " + format_freq(selection_freq_min) + ' - ' + format_freq(selection_freq_max);
     }
     else {
-        bandwidthLine.textContent = 'Bandwidth: --';
-        minFreqLine.textContent = 'Min: --';
-        maxFreqLine.textContent = 'Max: --';
+        freqRangeEl.textContent = 'Range: ---- Hz - ---- Hz';
+        bandwidthEl.textContent = 'Bandwidth: ---- Hz';
     }
 }
 
@@ -140,94 +137,42 @@ function format_freq(freq_hz: number) {
 
 async function getRecorderStatus() {
     try {
-        const response = await fetch(`${API_BASE}/recorder/status`);
+        const response = await fetch(`${API_URL}/recorder/status`);
         const data = await response.json();
-
-        const statusElement = document.getElementById('recorderStatus')! as HTMLBodyElement;
-        const startedAtElement = document.getElementById('startedAt')! as HTMLBodyElement;
-        const logsContainer = document.getElementById('logsContainer')! as HTMLBodyElement;
-        const logTableBody = document.getElementById('logTableBody')! as HTMLBodyElement;
-
-        is_recording = data.recording;
-        (document.getElementById('startBtn')! as HTMLButtonElement).disabled = is_recording || start_error;
-        (document.getElementById('stopBtn')! as HTMLButtonElement).disabled = !is_recording;
-        if (data.recording) {
-            statusElement.textContent = "Recording";
-            statusElement.style.color = "var(--accent-color)";
-            
-        } else {
-            statusElement.textContent = "Not Recording";
-            statusElement.style.color = "var(--text-color-muted)";
-        }
-
-        if (data.started_at) {
-            const date = new Date(data.started_at * 1000);
-            startedAtElement.textContent = `Started at: ${date.toLocaleString(undefined, { hour12: false })}`;
-        } 
-        else {
-            startedAtElement.textContent = "Started at: --/--/--, --:--:--";
-        }
-
-        if (data.last_logs && data.last_logs.length > 0) {
-            logsContainer.style.display = "flex";
-            logTableBody.innerHTML = "";
-            for (const log of data.last_logs) {
-                const row = document.createElement("tr");
-                const timestampCell = document.createElement("td");
-                const timestamp = new Date(log.timestamp * 1000).toLocaleString(undefined, { hour12: false });
-                timestampCell.textContent = timestamp;
-                row.appendChild(timestampCell);
-                const logCell = document.createElement("td");
-                logCell.textContent = log.data;
-                row.appendChild(logCell);
-                logTableBody.appendChild(row);
-            }
-        } else {
-            logsContainer.style.display = "none";
-        }
+        console.log(data);
     }
     catch (err) {
         console.error("Failed to fetch recorder status:", err);
     }
 }
 
-async function startRecording() {
-    const rec_type = (document.getElementById('typeSelect')! as HTMLSelectElement).value;
-    const freq_khz = parseFloat((document.getElementById('freqInput')! as HTMLInputElement).value);
-    const freq_hz = Math.round(freq_khz * 1000); // kHz → Hz
-    const zoom = parseInt((document.getElementById('zoomInput')! as HTMLInputElement).value, 10);
-    const autostop = parseInt((document.getElementById('autostopInput')! as HTMLInputElement).value, 10) || 0;
+async function handleCreateJob(event: SubmitEvent) {
+    event.preventDefault();
+    const rec_type = recTypeInput.value;
+    const frequency = Math.round(parseFloat(frequencyInput.value) * 1000);
+    const zoom = parseInt(zoomInput.value, 10);
+    const duration = parseInt(durationInput.value, 10);
+    const interval = parseInt(intervalInput.value, 10);
 
-    const body = { rec_type, frequency: freq_hz, autostop, zoom };
+    const body = { rec_type, frequency, zoom, duration, interval };
 
     try {
-        const response = await fetch(`${API_BASE}/recorder/start`, {
+        const response = await fetch(`${API_URL}/recorder/start`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
         const data = await response.json();
-        (document.getElementById('messageBox')! as HTMLBodyElement).textContent = data.message;
+        console.log(data);
         await getRecorderStatus();
     } catch (err) {
-        (document.getElementById('messageBox')! as HTMLBodyElement).textContent = "Failed to start recorder.";
-    }
-}
-
-async function stopRecording() {
-    try {
-        const response = await fetch(`${API_BASE}/recorder/stop`, { method: 'POST' });
-        const data = await response.json();
-        (document.getElementById('messageBox')! as HTMLBodyElement).textContent = data.message;
-        await getRecorderStatus();
-    } catch (err) {
-        (document.getElementById('messageBox')! as HTMLBodyElement).textContent = "Failed to stop recorder.";
+        warningEl.textContent = `Failed to start recorder. Error: ${err}`;
     }
 }
 
 async function checkApiStatus() {
     try {
-        const response = await fetch(`${API_BASE}/`);
+        const response = await fetch(`${API_URL}/`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const text = await response.text();
@@ -240,15 +185,14 @@ async function checkApiStatus() {
     }
 }
 
-checkApiStatus();
-getRecorderStatus();
-setInterval(getRecorderStatus, 1000);
+document.addEventListener('DOMContentLoaded', () => {
+    checkApiStatus();
+    getRecorderStatus();
+    setInterval(getRecorderStatus, REFRESH_INTERVAL_MS);
 
-// Update bandwidth info when freq or zoom changes
-(document.getElementById('freqInput')! as HTMLInputElement).addEventListener('input', updateBandwidthInfo);
-(document.getElementById('zoomInput')! as HTMLInputElement).addEventListener('input', updateBandwidthInfo);
-(document.getElementById('typeSelect')! as HTMLSelectElement).addEventListener('change', updateBandwidthInfo);
-updateBandwidthInfo();
-(window as any).startRecording = startRecording;
-(window as any).stopRecording = stopRecording;
-(window as any).handleTypeChange = handleTypeChange;
+    // Update bandwidth info when freq or zoom changes
+    frequencyInput.addEventListener('input', updateBandwidthInfo);
+    zoomInput.addEventListener('change', updateBandwidthInfo);
+    createJobForm.addEventListener('submit', handleCreateJob)
+    updateBandwidthInfo();
+});
