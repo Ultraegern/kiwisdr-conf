@@ -176,6 +176,7 @@ async function getAllJobStatus() {
     }
     catch (err) {
         console.error("Failed to fetch recorder status:", err);
+        checkApiStatus()
     }
 }
 
@@ -245,6 +246,7 @@ async function handleCreateJob(event: SubmitEvent) {
         await getAllJobStatus();
     } catch (err) {
         warningEl.innerHTML = `Failed to start recorder. Error: ${err}`;
+        checkApiStatus()
     }
 }
 
@@ -262,6 +264,7 @@ async function removeJob(jobId: number) {
     } catch (err) {
         console.error(`Error removing job ${jobId}:`, err);
         warningEl.innerHTML = `Failed to remove job ${jobId}. Error: ${err}`;
+        checkApiStatus()
     }
 }
 
