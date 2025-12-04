@@ -3,6 +3,7 @@ const MIN_FREQ = 0;
 const MAX_FREQ = 30_000_000;
 const MAX_ZOOM = 14;
 const REFRESH_INTERVAL_MS = 5000;
+const LOG_REFRESH_INTERVAL_MS = 1000;
 
 // --- DOM Elements ---
 const apiStatusEl = document.getElementById('api-status') as HTMLSpanElement;
@@ -19,6 +20,12 @@ const frequencyInput = document.getElementById('frequency') as HTMLInputElement;
 const zoomInput = document.getElementById('zoom') as HTMLInputElement;
 const durationInput = document.getElementById('duration') as HTMLInputElement;
 const intervalInput = document.getElementById('interval') as HTMLInputElement;
+
+// Log Viewer
+const logModal = document.getElementById('log-modal') as HTMLDivElement;
+const logModalClose = document.getElementById('log-modal-close') as HTMLButtonElement;
+const logTableBody = document.getElementById('log-table-body') as HTMLTableSectionElement;
+const logModalTitle = document.getElementById('log-modal-title') as HTMLHeadingElement;
 
 type RecordingType = 'png' | 'iq';
 
@@ -48,6 +55,7 @@ interface Job {
 
 type JobList = Job[];
 
+let logRefreshInterval: number | null = null;
 let is_recording = false, start_error = false
 
 function updateBandwidthInfo() {
@@ -280,12 +288,50 @@ function handleJobActions(event: Event) {
             // Check if the clicked button is the 'Remove' button
             if (button.classList.contains('btn-remove')) {
                 if (confirm(`Are you sure you want to remove Job ID ${jobId}?`)) {
-                    // Call the API removal function (renamed here for clarity)
                     removeJob(jobId); 
                 }
             }
-            // Add logic for 'btn-stop', 'btn-logs', etc., here later
+            else if (button.classList.contains('btn-logs')) {
+                showJobLogs(jobId);
+            }
         }
+    }
+}
+
+async function showJobLogs(jobId: number) {
+    try {
+        const response = await fetch(`${API_URL}/recorder/status/${jobId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const status: Job = await response.json();
+        const logs: Logs = status.logs;
+
+        logModalTitle.textContent = `Logs for Job ${jobId}`;
+        logTableBody.innerHTML = '';
+        
+        if (logs.length === 0) {
+            logTableBody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No logs available for this job.</td></tr>`;
+        } else {
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                // Format the log timestamp
+                const date = formatTime(log.timestamp);
+                
+                tr.innerHTML = `
+                    <td style="white-space: nowrap;">${date}</td>
+                    <td>${log.data}</td>
+                `;
+                logTableBody.appendChild(tr);
+            });
+        }
+        
+        // Display the modal
+        logModal.style.display = 'block';
+
+    } catch (err) {
+        console.error(`Failed to fetch logs for job ${jobId}:`, err);
+        warningEl.innerHTML = `Failed to fetch logs for job ${jobId}. Error: ${err}`;
     }
 }
 
@@ -314,6 +360,22 @@ document.addEventListener('DOMContentLoaded', () => {
     zoomInput.addEventListener('change', updateBandwidthInfo);
     recTypeInput.addEventListener('change', updateBandwidthInfo); // Added listener for rec_type change
     createJobForm.addEventListener('submit', handleCreateJob)
+
     jobsTableBody.addEventListener('click', handleJobActions);
+
+    if (logModalClose) {
+        logModalClose.addEventListener('click', () => {
+            logModal.style.display = 'none';
+        });
+    }
+    // Allows clicking outside the modal to close it
+    if (logModal) {
+        window.addEventListener('click', (event) => {
+            if (event.target === logModal) {
+                logModal.style.display = 'none';
+            }
+        });
+    }
+
     updateBandwidthInfo();
 });
