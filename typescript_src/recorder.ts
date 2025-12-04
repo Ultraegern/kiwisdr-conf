@@ -1,4 +1,4 @@
-const API_URL = "https://kiwisdr.local/api";
+const API_URL = "/api";
 const MIN_FREQ = 0;
 const MAX_FREQ = 30_000_000;
 const MAX_ZOOM = 14;
