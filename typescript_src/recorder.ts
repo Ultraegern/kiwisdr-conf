@@ -248,6 +248,44 @@ async function handleCreateJob(event: SubmitEvent) {
     }
 }
 
+async function removeJob(jobId: number) {
+    try {
+        const response = await fetch(`${API_URL}/recorder/${jobId}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to remove job: ${response.statusText}`);
+        }
+        // Assuming success, refresh the job list
+        await getAllJobStatus();
+        console.log(`Job ${jobId} removed successfully.`);
+    } catch (err) {
+        console.error(`Error removing job ${jobId}:`, err);
+        warningEl.innerHTML = `Failed to remove job ${jobId}. Error: ${err}`;
+    }
+}
+
+function handleJobActions(event: Event) {
+    const target = event.target as HTMLElement;
+    const button = target.closest('button');
+
+    if (button) {
+        const jobIdAttr = button.getAttribute('data-job-id');
+        if (jobIdAttr) {
+            const jobId = parseInt(jobIdAttr, 10);
+            
+            // Check if the clicked button is the 'Remove' button
+            if (button.classList.contains('btn-remove')) {
+                if (confirm(`Are you sure you want to remove Job ID ${jobId}?`)) {
+                    // Call the API removal function (renamed here for clarity)
+                    removeJob(jobId); 
+                }
+            }
+            // Add logic for 'btn-stop', 'btn-logs', etc., here later
+        }
+    }
+}
+
 async function checkApiStatus() {
     try {
         const response = await fetch(`${API_URL}/`);
@@ -273,5 +311,6 @@ document.addEventListener('DOMContentLoaded', () => {
     zoomInput.addEventListener('change', updateBandwidthInfo);
     recTypeInput.addEventListener('change', updateBandwidthInfo); // Added listener for rec_type change
     createJobForm.addEventListener('submit', handleCreateJob)
+    jobsTableBody.addEventListener('click', handleJobActions);
     updateBandwidthInfo();
 });
