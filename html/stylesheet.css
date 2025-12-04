@@ -297,11 +297,15 @@ input:disabled {
   color: var(--text-color-bright);
   box-shadow: var(--main-shadow-dark);
 }
-.modal-header {
+.modal-top {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   padding-bottom: 10px;
+}
+.modal-header {
+  flex-grow: 1;
+  text-align: center;
   margin: 0;
   color: var(--accent-color);
 }
@@ -310,6 +314,8 @@ input:disabled {
   font-size: 48px;
   font-weight: bold;
   cursor: pointer;
+  order: 2;
+  line-height: 0.8;
 }
 .modal-close:hover,
 .modal-close:focus {

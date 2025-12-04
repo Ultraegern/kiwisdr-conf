@@ -57,6 +57,7 @@ type JobList = Job[];
 
 let logRefreshInterval: number | null = null;
 let is_recording = false, start_error = false
+let currentLogJobId: number | null = null;
 
 function updateBandwidthInfo() {
     const { bandwidth, selection_freq_min, selection_freq_max, zoom_invalid, error_messages } = calcFreqRange(Number(frequencyInput.value) * 1000, Number(zoomInput.value), recTypeInput.value)
@@ -87,6 +88,14 @@ function isNrValid(nr: number, nr_name: string) {
         nr_valid = false;
     } 
     return { nr_valid: nr_valid, nr_error_messages: nr_error_messages };
+}
+
+function escapeHtml(unsafe: string) {
+    return unsafe.replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
 }
 
 function isZoomValid(zoom: number) {
@@ -185,6 +194,42 @@ async function getAllJobStatus() {
     catch (err) {
         console.error("Failed to fetch recorder status:", err);
         checkApiStatus()
+    }
+}
+
+async function fetchAndRenderLogs(jobId: number) {
+    try {
+        const response = await fetch(`${API_URL}/recorder/status/${jobId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const status: Job = await response.json();
+        const logs: Logs = status.logs;
+
+        if (currentLogJobId !== jobId) {
+            currentLogJobId = jobId;
+        }
+
+
+        logModalTitle.textContent = `Logs for Job ${jobId}`;
+        logTableBody.innerHTML = ''; 
+
+        if (logs.length === 0) {
+            logTableBody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No logs available for this job.</td></tr>`;
+        } else {
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                const date = formatTime(log.timestamp);
+                
+                tr.innerHTML = `
+                    <td style="white-space: nowrap;">${date}</td>
+                    <td>${escapeHtml(log.data)}</td>
+                `;
+                logTableBody.appendChild(tr); 
+            });
+        }
+    } catch (err) {
+        console.error(`Failed to fetch logs for job ${jobId}:`, err);
     }
 }
 
@@ -299,40 +344,22 @@ function handleJobActions(event: Event) {
 }
 
 async function showJobLogs(jobId: number) {
-    try {
-        const response = await fetch(`${API_URL}/recorder/status/${jobId}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const status: Job = await response.json();
-        const logs: Logs = status.logs;
-
-        logModalTitle.textContent = `Logs for Job ${jobId}`;
-        logTableBody.innerHTML = '';
-        
-        if (logs.length === 0) {
-            logTableBody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No logs available for this job.</td></tr>`;
-        } else {
-            logs.forEach(log => {
-                const tr = document.createElement('tr');
-                // Format the log timestamp
-                const date = formatTime(log.timestamp);
-                
-                tr.innerHTML = `
-                    <td style="white-space: nowrap;">${date}</td>
-                    <td>${log.data}</td>
-                `;
-                logTableBody.appendChild(tr);
-            });
-        }
-        
-        // Display the modal
-        logModal.style.display = 'block';
-
-    } catch (err) {
-        console.error(`Failed to fetch logs for job ${jobId}:`, err);
-        warningEl.innerHTML = `Failed to fetch logs for job ${jobId}. Error: ${err}`;
+    // 1. Stop any existing interval
+    if (logRefreshInterval !== null) {
+        clearInterval(logRefreshInterval);
     }
+
+    currentLogJobId = jobId;
+
+    await fetchAndRenderLogs(jobId);
+    
+    logRefreshInterval = setInterval(() => {
+        if (currentLogJobId !== null) {
+            fetchAndRenderLogs(currentLogJobId);
+        }
+    }, LOG_REFRESH_INTERVAL_MS) as unknown as number;
+
+    logModal.style.display = 'block';
 }
 
 async function checkApiStatus() {
@@ -366,13 +393,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logModalClose) {
         logModalClose.addEventListener('click', () => {
             logModal.style.display = 'none';
+            // STOP the refresh interval when closing
+            if (logRefreshInterval !== null) {
+                clearInterval(logRefreshInterval);
+                logRefreshInterval = null;
+            }
+            currentLogJobId = null;
         });
     }
-    // Allows clicking outside the modal to close it
     if (logModal) {
         window.addEventListener('click', (event) => {
             if (event.target === logModal) {
                 logModal.style.display = 'none';
+                // STOP the refresh interval when closing
+                if (logRefreshInterval !== null) {
+                    clearInterval(logRefreshInterval);
+                    logRefreshInterval = null;
+                }
+                currentLogJobId = null;
             }
         });
     }
