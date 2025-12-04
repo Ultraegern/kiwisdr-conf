@@ -177,6 +177,7 @@ async fn main() -> Result<()> {
             .service(status)
             .service(start_recorder)
             .service(stop_recorder)
+            .service(remove_recorder)
             .service(recorder_status_all)
             .service(recorder_status_one)
         })
