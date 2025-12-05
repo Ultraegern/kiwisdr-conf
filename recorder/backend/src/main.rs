@@ -135,6 +135,7 @@ async fn read_output(pipe: impl AsyncRead + Unpin, job: SharedJob, pipe_tag: &st
     if responsible_for_exit {
         let mut state: LockedJob = job.lock().await;
         state.running = false;
+        state.process = None;
         state.logs.push_back(Log {
             timestamp: Utc::now().timestamp() as u64, 
             data: "<Exited>".to_string()
@@ -187,31 +188,27 @@ async fn main() -> Result<()> {
 }
 
 async fn job_scheduler(shared_hashmap: SharedJobHashmap) {
-    println!("Job Scheduler Started Sucessfully");
+    println!("Job Scheduler Started Successfully");
     const CHECK_INTERVAL: Duration = Duration::from_secs(1);
     loop {
         let now = Utc::now().timestamp() as u64;
-        let mut jobs: Vec<SharedJob>;
         let mut jobs_to_start: Vec<SharedJob> = Vec::new();
+        let shared_jobs: Vec<SharedJob> = {
+            let hashmap = shared_hashmap.lock().await;
+            hashmap.values().cloned().collect()
+        };
 
-        let hashmap = shared_hashmap.lock().await;
-        let keys = hashmap.keys();
-        jobs = Vec::with_capacity(keys.len());
-        for key in keys {
-            jobs.push(hashmap.get(key).unwrap().clone())
-        }
-        drop(hashmap);
-
-        for shared_job in jobs {
+        for shared_job in shared_jobs {
             let job: LockedJob = shared_job.lock().await;
             
-            if !job.running && job.next_run_start.unwrap_or(0) <= now {
-                if job.process.is_none() {
-                    jobs_to_start.push(shared_job.clone());
-                }
+            if !job.running 
+                    && job.next_run_start.unwrap_or(0) <= now 
+                    && job.process.is_none(){
+                
+                jobs_to_start.push(shared_job.clone());
             }
-            drop(job) // Gemini says that variables dont die at the end of for bloks
         }
+
         println!("Jobs to start: {:?}", jobs_to_start);
 
         for job in jobs_to_start {
