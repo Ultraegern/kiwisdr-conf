@@ -76,11 +76,11 @@ gpg --import-ownertrust <<< "846475029CE00982F700C9AC3CB2F77A8047BEDC:3:"
 ### Install
 Download the repository and run setup.sh:
 ```bash
-curl -fsSL https://github.com/Ultraegern/kiwisdr-conf/archive/refs/heads/sheduled-recordings.zip -o /tmp/kiwisdr-conf.zip && \
+curl -fsSL https://github.com/Ultraegern/kiwisdr-conf/archive/refs/heads/main.zip -o /tmp/kiwisdr-conf.zip && \
 sudo apt install unzip -qq 1>/dev/null && \
 unzip -qq /tmp/kiwisdr-conf.zip -d /tmp/ && \
 rm /tmp/kiwisdr-conf.zip && \
-cd /tmp/kiwisdr-conf-sheduled-recordings && \
+cd /tmp/kiwisdr-conf-main && \
 gpg --verify setup.sh.asc setup.sh 2>/dev/null && \
 sudo chmod +x setup.sh && \
 sudo ./setup.sh

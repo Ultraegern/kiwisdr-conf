@@ -30,7 +30,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   verify_signature recorder/kiwiclient/kiwiclient-setup.sh && sudo chmod +x recorder/kiwiclient/kiwiclient-setup.sh && sudo ./recorder/kiwiclient/kiwiclient-setup.sh
   verify_signature recorder/backend/backend-setup.sh && sudo chmod +x recorder/backend/backend-setup.sh && sudo ./recorder/backend/backend-setup.sh
 
-  sudo rm -R /tmp/kiwisdr-conf-sheduled-recordings
+  sudo rm -R /tmp/kiwisdr-conf-main
 
   echo "✅ The KiwiSDR configuration is complete."
   if [ "${1:-}" = "--no-reboot" ]; then

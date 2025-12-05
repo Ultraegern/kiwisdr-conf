@@ -3,8 +3,8 @@
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-source /tmp/kiwisdr-conf-sheduled-recordings/setup.sh # Load verify_signature()
-DIR=/tmp/kiwisdr-conf-sheduled-recordings
+source /tmp/kiwisdr-conf-main/setup.sh # Load verify_signature()
+DIR=/tmp/kiwisdr-conf-main
 
 # Function to check if a command exists
 command_exists() {
