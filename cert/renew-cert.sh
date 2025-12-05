@@ -8,7 +8,7 @@ SSL_DIR="/etc/ssl/kiwisdr"
 CA_DIR="$SSL_DIR/ca"
 TS=$(date +%F-%H%M%S)
 HOST="kiwisdr.local"
-IPV4=$(ipv4())
+IPV4=$(ipv4)
 
 mkdir -p "$SSL_DIR" "$CA_DIR"
 
