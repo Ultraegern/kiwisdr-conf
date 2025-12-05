@@ -1,7 +1,7 @@
 # Overview  
 This repository installs and configues:  
 * Nginx as a TLS endpoint, webserver for static files, and a proxy for everything else  
-* KiwiClient for recording from the KiwiSDR  
+* [KiwiClient](https://github.com/jks-prv/kiwiclient) for recording from the KiwiSDR  
 * Rust + Actix Web as a webserver for exposing KiwiClient as a REST api  
 * Html + CSS + Typescript as a web based frontend to KiwiClient  
 ### Compatability
