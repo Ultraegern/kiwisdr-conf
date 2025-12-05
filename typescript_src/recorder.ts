@@ -1,44 +1,83 @@
-const API_BASE = "/api";
+const API_URL = "/api";
 const MIN_FREQ = 0;
 const MAX_FREQ = 30_000_000;
 const MAX_ZOOM = 14;
+const REFRESH_INTERVAL_MS = 5000;
+const LOG_REFRESH_INTERVAL_MS = 1000;
+
+// --- DOM Elements ---
+const apiStatusEl = document.getElementById('api-status') as HTMLSpanElement;
+const createJobForm = document.getElementById('create-job-form') as HTMLFormElement;
+const createJobBtn = document.getElementById('create-job-btn') as HTMLButtonElement;
+const jobsTableBody = document.getElementById('jobs-table-body') as HTMLTableSectionElement;
+const freqRangeEl = document.getElementById('freq-range') as HTMLDivElement;
+const bandwidthEl = document.getElementById('bandwidth') as HTMLDivElement;
+const warningEl = document.getElementById('warning') as HTMLDivElement;
+
+// Form inputs
+const recTypeInput = document.getElementById('rec_type') as HTMLSelectElement;
+const frequencyInput = document.getElementById('frequency') as HTMLInputElement;
+const zoomInput = document.getElementById('zoom') as HTMLInputElement;
+const durationInput = document.getElementById('duration') as HTMLInputElement;
+const intervalInput = document.getElementById('interval') as HTMLInputElement;
+
+// Log Viewer
+const logModal = document.getElementById('log-modal') as HTMLDivElement;
+const logModalClose = document.getElementById('log-modal-close') as HTMLButtonElement;
+const logTableBody = document.getElementById('log-table-body') as HTMLTableSectionElement;
+const logModalTitle = document.getElementById('log-modal-title') as HTMLHeadingElement;
+
+type RecordingType = 'png' | 'iq';
+
+interface Log {
+    timestamp: number;
+    data: string;
+}
+
+type Logs = Log[];
+
+interface RecorderSettings {
+    rec_type: RecordingType;
+    frequency: number;
+    zoom?: number;
+    duration: number;
+    interval?: number | null;
+}
+
+interface Job {
+    job_id: number;
+    running: boolean;
+    started_at: number | null;
+    next_run_start: number | null;
+    logs: Logs;
+    settings: RecorderSettings;
+}
+
+type JobList = Job[];
+
+let logRefreshInterval: number | null = null;
 let is_recording = false, start_error = false
+let currentLogJobId: number | null = null;
 
 function updateBandwidthInfo() {
-    const type = (document.getElementById('typeSelect')! as HTMLSelectElement).value;
-    const zoomInput = document.getElementById('zoomInput') as HTMLInputElement;
-    const zoom = parseInt(zoomInput.value, 10);
-    const freqInput = parseFloat((document.getElementById('freqInput')! as HTMLInputElement).value) * 1000; // kHz → Hz
-    
-    const bandwidthLine = document.getElementById('bandwidthLine')! as HTMLBodyElement;
-    const minFreqLine = document.getElementById('minFreqLine')! as HTMLBodyElement;
-    const maxFreqLine = document.getElementById('maxFreqLine')! as HTMLBodyElement;
-    const zoomWarning = document.getElementById('zoomWarning')! as HTMLBodyElement;
-    const startBtn = document.getElementById('startBtn')! as HTMLButtonElement;
-
-    const { bandwidth, selection_freq_min, selection_freq_max, zoom_invalid, error_messages } = calcFreqRange(freqInput, zoom, type)
+    const { bandwidth, selection_freq_min, selection_freq_max, zoom_invalid, error_messages } = calcFreqRange(Number(frequencyInput.value) * 1000, Number(zoomInput.value), recTypeInput.value)
     
     if (error_messages.length > 0) {
-        zoomWarning.style.display = 'block';
-        zoomWarning.innerHTML = error_messages.join('<br><br>');
+        warningEl.innerHTML = error_messages.join('<br>');
         start_error = true
-        startBtn.disabled = is_recording || start_error;
+        createJobBtn.disabled = is_recording || start_error;
     } else {
-        zoomWarning.style.display = 'none';
+        warningEl.innerHTML = '';
         start_error = false
-        startBtn.disabled = is_recording || start_error;
+        createJobBtn.disabled = is_recording || start_error;
     }
-
     if (!zoom_invalid) {
-        bandwidthLine.textContent = "Bandwidth: " + format_freq(bandwidth);
-        minFreqLine.textContent = "Min: " + format_freq(selection_freq_min);
-        maxFreqLine.textContent = "Max: " + format_freq(selection_freq_max);
-    
+        bandwidthEl.textContent = "Bandwidth: " + format_freq(bandwidth);
+        freqRangeEl.textContent = "Range: " + format_freq(selection_freq_min) + ' - ' + format_freq(selection_freq_max);
     }
     else {
-        bandwidthLine.textContent = 'Bandwidth: --';
-        minFreqLine.textContent = 'Min: --';
-        maxFreqLine.textContent = 'Max: --';
+        freqRangeEl.textContent = 'Range: ---- Hz - ---- Hz';
+        bandwidthEl.textContent = 'Bandwidth: ---- Hz';
     }
 }
 
@@ -49,6 +88,14 @@ function isNrValid(nr: number, nr_name: string) {
         nr_valid = false;
     } 
     return { nr_valid: nr_valid, nr_error_messages: nr_error_messages };
+}
+
+function escapeHtml(unsafe: string) {
+    return unsafe.replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
 }
 
 function isZoomValid(zoom: number) {
@@ -71,7 +118,7 @@ function isZoomValid(zoom: number) {
     return {zoom_valid: zoom_valid, zoom_error_messages: zoom_error_messages};
 }
 
-function calcFreqRange(center_freq_hz: number, zoom: number, mode: string) { // Int, Int, Str => Band: Int, Min: Int, Max: Int, Invalid: bool, error: []
+function calcFreqRange(center_freq_hz: number, zoom: number, mode: string) {
     let bandwidth = 0, selection_freq_min = 0, selection_freq_max = 0, freq_range_invalid = false, error_messages = [];
 
     const { nr_valid, nr_error_messages } = isNrValid(center_freq_hz, "Frequency")
@@ -112,12 +159,6 @@ function calcFreqRange(center_freq_hz: number, zoom: number, mode: string) { // 
     return { bandwidth: bandwidth, selection_freq_min: selection_freq_min, selection_freq_max: selection_freq_max, freq_range_invalid: freq_range_invalid, zoom_invalid: false, error_messages: error_messages };
 }
 
-function handleTypeChange() {
-    const type = (document.getElementById('typeSelect')! as HTMLSelectElement).value;
-    const zoomInput = document.getElementById('zoomInput') as HTMLInputElement;
-    zoomInput.disabled = (type !== 'png');
-}
-
 function format_freq(freq_hz: number) {
     if (Math.abs(freq_hz) < 1000) {
         let freq_hz_str = freq_hz.toFixed(0)
@@ -133,101 +174,246 @@ function format_freq(freq_hz: number) {
     }
 }
 
-async function getRecorderStatus() {
+function formatTime(unixTime: number | null) {
+    if (unixTime == null) {
+        return "None"
+    }
+    const date = new Date((unixTime * 1000));
+    return date.toLocaleString(undefined, { hour12: false })
+}
+
+async function getAllJobStatus() {
     try {
-        const response = await fetch(`${API_BASE}/recorder/status`);
-        const data = await response.json();
-
-        const statusElement = document.getElementById('recorderStatus')! as HTMLBodyElement;
-        const startedAtElement = document.getElementById('startedAt')! as HTMLBodyElement;
-        const logsContainer = document.getElementById('logsContainer')! as HTMLBodyElement;
-        const logTableBody = document.getElementById('logTableBody')! as HTMLBodyElement;
-
-        is_recording = data.recording;
-        (document.getElementById('startBtn')! as HTMLButtonElement).disabled = is_recording || start_error;
-        (document.getElementById('stopBtn')! as HTMLButtonElement).disabled = !is_recording;
-        if (data.recording) {
-            statusElement.textContent = "Recording";
-            statusElement.style.color = "var(--accent-color)";
-            
-        } else {
-            statusElement.textContent = "Not Recording";
-            statusElement.style.color = "var(--text-color-muted)";
+        const response = await fetch(`${API_URL}/recorder/status`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        if (data.started_at) {
-            const date = new Date(data.started_at * 1000);
-            startedAtElement.textContent = `Started at: ${date.toLocaleString(undefined, { hour12: false })}`;
-        } 
-        else {
-            startedAtElement.textContent = "Started at: --/--/--, --:--:--";
-        }
-
-        if (data.last_logs && data.last_logs.length > 0) {
-            logsContainer.style.display = "flex";
-            logTableBody.innerHTML = "";
-            for (const log of data.last_logs) {
-                const row = document.createElement("tr");
-                const timestampCell = document.createElement("td");
-                const timestamp = new Date(log.timestamp * 1000).toLocaleString(undefined, { hour12: false });
-                timestampCell.textContent = timestamp;
-                row.appendChild(timestampCell);
-                const logCell = document.createElement("td");
-                logCell.textContent = log.data;
-                row.appendChild(logCell);
-                logTableBody.appendChild(row);
-            }
-        } else {
-            logsContainer.style.display = "none";
-        }
+        const joblist: JobList = await response.json();
+        renderJobList(joblist);
     }
     catch (err) {
         console.error("Failed to fetch recorder status:", err);
+        checkApiStatus()
     }
 }
 
-async function startRecording() {
-    const rec_type = (document.getElementById('typeSelect')! as HTMLSelectElement).value;
-    const freq_khz = parseFloat((document.getElementById('freqInput')! as HTMLInputElement).value);
-    const freq_hz = Math.round(freq_khz * 1000); // kHz → Hz
-    const zoom = parseInt((document.getElementById('zoomInput')! as HTMLInputElement).value, 10);
-    const autostop = parseInt((document.getElementById('autostopInput')! as HTMLInputElement).value, 10) || 0;
+async function fetchAndRenderLogs(jobId: number) {
+    try {
+        const response = await fetch(`${API_URL}/recorder/status/${jobId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const status: Job = await response.json();
+        const logs: Logs = status.logs;
 
-    const body = { rec_type, frequency: freq_hz, autostop, zoom };
+        if (currentLogJobId !== jobId) {
+            currentLogJobId = jobId;
+        }
+
+
+        logModalTitle.textContent = `Logs for Job ${jobId}`;
+        logTableBody.innerHTML = ''; 
+
+        if (logs.length === 0) {
+            logTableBody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No logs available for this job.</td></tr>`;
+        } else {
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                const date = formatTime(log.timestamp);
+                
+                tr.innerHTML = `
+                    <td style="white-space: nowrap;">${date}</td>
+                    <td>${escapeHtml(log.data)}</td>
+                `;
+                logTableBody.appendChild(tr); 
+            });
+        }
+    } catch (err) {
+        console.error(`Failed to fetch logs for job ${jobId}:`, err);
+    }
+}
+
+async function renderJobList(jobs: JobList) {
+    jobsTableBody.innerHTML = '';
+
+    if (jobs.length == 0) {
+        jobsTableBody.innerHTML = `<tr><td colspan="10" style="text-align:center;">No active jobs found.</td></tr>`;
+        return;
+    }
+
+    for (const job of jobs) {
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-job-id', `${job.job_id}`);
+        
+        const statusText: string = job.running ? 'Recording' : 'Stoped';
+        const statusColor: string = job.running ? 'var(--green)' : 'var(--accent-color)';
+        
+        let settingsHTML = `Type: ${job.settings.rec_type}<br>`;
+        settingsHTML += `Freq: ${format_freq(job.settings.frequency)}<br>`;
+        settingsHTML += `Duration: ${job.settings.duration}s`;
+
+        if (job.settings.rec_type === 'png') {
+            settingsHTML += `<br>Zoom: ${job.settings.zoom}`;
+        }
+        if (job.settings.interval) {
+            settingsHTML += `<br>Interval: ${job.settings.interval}s`;
+        }
+        
+        tr.innerHTML = `
+            <td>${job.job_id}</td>
+            <td style="color: ${statusColor}; font-weight: bold;">${statusText}</td>
+            <td style="white-space: nowrap;">${settingsHTML}</td>
+            <td>${formatTime(job.started_at)}</td>
+            <td>${formatTime(job.next_run_start)}</td>
+            <td>
+                <div class="button-group">
+                    <button class="btn-stop" data-job-id="${job.job_id}" ${!job.running ? 'disabled' : ''}>Stop</button>
+                    <button class="btn-logs" data-job-id="${job.job_id}">Logs</button>
+                    <button class="btn-remove" data-job-id="${job.job_id}">Remove</button>
+                </div>
+            </td>
+        `;
+        jobsTableBody.appendChild(tr);
+    }
+}
+
+async function handleCreateJob(event: SubmitEvent) {
+    event.preventDefault();
+    const rec_type = recTypeInput.value as RecordingType;
+    const frequency = Math.round(parseFloat(frequencyInput.value) * 1000);
+    const zoom = rec_type === 'png' ? parseInt(zoomInput.value, 10) : undefined;
+    const duration = parseInt(durationInput.value, 10);
+    const intervalVal = parseInt(intervalInput.value, 10);
+    const interval = isNaN(intervalVal) ? null : intervalVal;
+
+    const body = { rec_type, frequency, zoom, duration, interval };
 
     try {
-        const response = await fetch(`${API_BASE}/recorder/start`, {
+        const response = await fetch(`${API_URL}/recorder/start`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
         const data = await response.json();
-        (document.getElementById('messageBox')! as HTMLBodyElement).textContent = data.message;
-        await getRecorderStatus();
+        console.log(data);
+        await getAllJobStatus();
     } catch (err) {
-        (document.getElementById('messageBox')! as HTMLBodyElement).textContent = "Failed to start recorder.";
+        warningEl.innerHTML = `Failed to start recorder. Error: ${err}`;
+        checkApiStatus()
     }
 }
 
-async function stopRecording() {
+async function removeJob(jobId: number) {
     try {
-        const response = await fetch(`${API_BASE}/recorder/stop`, { method: 'POST' });
-        const data = await response.json();
-        (document.getElementById('messageBox')! as HTMLBodyElement).textContent = data.message;
-        await getRecorderStatus();
+        const response = await fetch(`${API_URL}/recorder/${jobId}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to remove job: ${response.statusText}`);
+        }
+        // Assuming success, refresh the job list
+        await getAllJobStatus();
+        console.log(`Job ${jobId} removed successfully.`);
     } catch (err) {
-        (document.getElementById('messageBox')! as HTMLBodyElement).textContent = "Failed to stop recorder.";
+        console.error(`Error removing job ${jobId}:`, err);
+        warningEl.innerHTML = `Failed to remove job ${jobId}. Error: ${err}`;
+        checkApiStatus()
     }
 }
 
-getRecorderStatus();
-setInterval(getRecorderStatus, 1000);
+function handleJobActions(event: Event) {
+    const target = event.target as HTMLElement;
+    const button = target.closest('button');
 
-// Update bandwidth info when freq or zoom changes
-(document.getElementById('freqInput')! as HTMLInputElement).addEventListener('input', updateBandwidthInfo);
-(document.getElementById('zoomInput')! as HTMLInputElement).addEventListener('input', updateBandwidthInfo);
-(document.getElementById('typeSelect')! as HTMLSelectElement).addEventListener('change', updateBandwidthInfo);
-updateBandwidthInfo();
-(window as any).startRecording = startRecording;
-(window as any).stopRecording = stopRecording;
-(window as any).handleTypeChange = handleTypeChange;
+    if (button) {
+        const jobIdAttr = button.getAttribute('data-job-id');
+        if (jobIdAttr) {
+            const jobId = parseInt(jobIdAttr, 10);
+            
+            // Check if the clicked button is the 'Remove' button
+            if (button.classList.contains('btn-remove')) {
+                if (confirm(`Are you sure you want to remove Job ID ${jobId}?`)) {
+                    removeJob(jobId); 
+                }
+            }
+            else if (button.classList.contains('btn-logs')) {
+                showJobLogs(jobId);
+            }
+        }
+    }
+}
+
+async function showJobLogs(jobId: number) {
+    // 1. Stop any existing interval
+    if (logRefreshInterval !== null) {
+        clearInterval(logRefreshInterval);
+    }
+
+    currentLogJobId = jobId;
+
+    await fetchAndRenderLogs(jobId);
+    
+    logRefreshInterval = setInterval(() => {
+        if (currentLogJobId !== null) {
+            fetchAndRenderLogs(currentLogJobId);
+        }
+    }, LOG_REFRESH_INTERVAL_MS) as unknown as number;
+
+    logModal.style.display = 'block';
+}
+
+async function checkApiStatus() {
+    try {
+        const response = await fetch(`${API_URL}/`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const text = await response.text();
+        apiStatusEl.textContent = `API Status: ${text}`;
+        apiStatusEl.className = 'online';
+    } catch (error) {
+        console.error('API status check failed:', error);
+        apiStatusEl.textContent = 'API Status: OFFLINE';
+        apiStatusEl.className = 'offline';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkApiStatus();
+    getAllJobStatus();
+    setInterval(getAllJobStatus, REFRESH_INTERVAL_MS);
+
+    // Update bandwidth info when freq or zoom changes
+    frequencyInput.addEventListener('input', updateBandwidthInfo);
+    zoomInput.addEventListener('change', updateBandwidthInfo);
+    recTypeInput.addEventListener('change', updateBandwidthInfo); // Added listener for rec_type change
+    createJobForm.addEventListener('submit', handleCreateJob)
+
+    jobsTableBody.addEventListener('click', handleJobActions);
+
+    if (logModalClose) {
+        logModalClose.addEventListener('click', () => {
+            logModal.style.display = 'none';
+            // STOP the refresh interval when closing
+            if (logRefreshInterval !== null) {
+                clearInterval(logRefreshInterval);
+                logRefreshInterval = null;
+            }
+            currentLogJobId = null;
+        });
+    }
+    if (logModal) {
+        window.addEventListener('click', (event) => {
+            if (event.target === logModal) {
+                logModal.style.display = 'none';
+                // STOP the refresh interval when closing
+                if (logRefreshInterval !== null) {
+                    clearInterval(logRefreshInterval);
+                    logRefreshInterval = null;
+                }
+                currentLogJobId = null;
+            }
+        });
+    }
+
+    updateBandwidthInfo();
+});
