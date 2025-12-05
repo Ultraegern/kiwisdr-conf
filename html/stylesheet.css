@@ -290,7 +290,6 @@ input:disabled {
   background-color: var(--main-color-medium);
   margin: 10% auto; 
   padding: 20px;
-  border: 1px solid var(--main-color-light);
   border-radius: 8px;
   width: 80%; 
   max-width: 700px;
@@ -390,6 +389,9 @@ input:disabled {
   }
   .job-status-div {
   background-color: var(--main-color-light);
+  }
+  .modal-content {
+    background-color: var(--main-color-light);
   }
 }
 @media (max-width:960px) {
