@@ -1,10 +1,14 @@
 #!/bin/bash
 set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
+
+source ./ipv4.sh
 
 SSL_DIR="/etc/ssl/kiwisdr"
 CA_DIR="$SSL_DIR/ca"
 TS=$(date +%F-%H%M%S)
 HOST="kiwisdr.local"
+IPV4=$(ipv4())
 
 mkdir -p "$SSL_DIR" "$CA_DIR"
 
@@ -56,7 +60,7 @@ authorityKeyIdentifier = keyid,issuer
 
 [ alt_names ]
 DNS.1 = ${HOST}
-IP.1  = 172.19.124.15
+IP.1  = ${IPV4}
 EOF
 
 # ----------------------------------------------------------------------
