@@ -1,9 +1,9 @@
 # Overview  
 This repository installs and configues:  
-* Nginx as a TLS endpoint, webserver for static files, and a proxy for everything else  
-* [KiwiClient](https://github.com/jks-prv/kiwiclient) for recording from the KiwiSDR  
-* Rust + Actix Web as a webserver for exposing KiwiClient as a REST api  
-* Html + CSS + Typescript as a web based frontend to KiwiClient  
+* Nginx as a webserver for static files, proxy for OpenWebRX and Backend, and TLS middleware.  
+* [KiwiClient](https://github.com/jks-prv/kiwiclient) for recording from the KiwiSDR.  
+* Rust + Actix Web as a webserver for exposing KiwiClient as a REST api.  
+* Html + CSS + Typescript as a web based frontend to KiwiClient.  
 ### Compatability
 Oficial KiwiSDR firmware .img files are [here](http://kiwisdr.com/quickstart/index.html#id-dload).  
 Only works with Debian 11 based KiwiSDR firmware, not Debian 9 based.  
