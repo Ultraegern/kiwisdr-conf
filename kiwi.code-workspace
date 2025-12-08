@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "backend",
+			"path": "recorder/backend"
+		},
+		{
+			"name": "kiwisdr-conf",
+			"path": "."
+		}
+	],
+	"settings": {}
+}
