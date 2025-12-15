@@ -171,15 +171,13 @@ fn generate_uid() -> String {
         .map(|i| {
             let idx = rng.gen_range(0..CHARSET.len());
             let char_val = CHARSET[idx] as char;
-            // Optionally add a hyphen for readability
-            if i > 0 && i % 4 == 0 {
+            if i > 0 && (i + 1) % 5 == 0 {
                 '-'
             } else {
                 char_val
             }
         })
         .collect::<String>()
-        .replace("--", "-") // Clean up any double hyphens
 }
 
 #[actix_web::main]
