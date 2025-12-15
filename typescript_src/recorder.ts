@@ -46,6 +46,7 @@ interface RecorderSettings {
 
 interface Job {
     job_id: number;
+    job_uid: string;
     running: boolean;
     started_at: number | null;
     next_run_start: number | null;
@@ -260,7 +261,7 @@ async function renderJobList(jobs: JobList) {
         }
         
         tr.innerHTML = `
-            <td>${job.job_id}</td>
+            <td>${job.job_uid}</td>
             <td style="color: ${statusColor}; font-weight: bold;">${statusText}</td>
             <td style="white-space: nowrap;">${settingsHTML}</td>
             <td>${formatTime(job.started_at)}</td>
