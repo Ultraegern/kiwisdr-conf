@@ -393,7 +393,7 @@ async fn spawn_recorder(shared_job: SharedJob) -> Result<()> {
 
     let settings = job.settings;
 
-    let filename_common = format!("{}_Fq{}", Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string(), to_scientific(settings.frequency));
+    let filename_common = format!("{}_{}_Fq{}", job.job_uid, Utc::now().format("%Y-%m-%d_%H-%M-%S_UTC").to_string(), to_scientific(settings.frequency));
     let filename_png = format!("{}_Zm{}", filename_common, settings.zoom.to_string());
     let filename_iq = format!("{}_Bw1d2e4", filename_common);
 
