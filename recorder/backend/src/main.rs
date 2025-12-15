@@ -4,6 +4,7 @@ use serde_json::json;
 use std::{collections::{HashMap, VecDeque}, fmt::{self, Display, Formatter}, io::Result, process::Stdio, sync::Arc};
 use tokio::{spawn, time::{Duration, sleep}, process::Child, sync::{Mutex, MutexGuard}, io::{AsyncBufReadExt, BufReader, AsyncRead}};
 use chrono::Utc;
+use rand::{Rng, thread_rng};
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 struct Log {
@@ -65,6 +66,7 @@ type ArtixRecorderSettings = web::Json<RecorderSettings>;
 #[derive(Serialize, Clone)]
 struct JobStatus {
     job_id: u32,
+    job_uid: String,
     running: bool,
     started_at: Option<u64>,
     next_run_start: Option<u64>,
@@ -78,6 +80,7 @@ impl From<&Job> for JobStatus {
         const LOG_COUNT: usize = 20;
         JobStatus {
             job_id: value.job_id,
+            job_uid: value.job_uid.clone(),
             running: value.running,
             started_at: value.started_at,
             next_run_start: value.next_run_start,
@@ -105,6 +108,7 @@ impl From<&Job> for JobStatus {
 #[derive(Debug)]
 struct Job {
     job_id: u32,
+    job_uid: String,
     running: bool,
     process: Option<Child>,
     started_at: Option<u64>,
@@ -156,6 +160,26 @@ fn to_scientific(num: u32) -> String {
         .replace('.', "d");
 
     return format!("{}e{}", mantissa_str, exponent);
+}
+
+fn generate_uid() -> String {
+    const LENGTH: usize = 9;
+    const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let mut rng = thread_rng();
+
+    (0..LENGTH)
+        .map(|i| {
+            let idx = rng.gen_range(0..CHARSET.len());
+            let char_val = CHARSET[idx] as char;
+            // Optionally add a hyphen for readability
+            if i > 0 && i % 4 == 0 {
+                '-'
+            } else {
+                char_val
+            }
+        })
+        .collect::<String>()
+        .replace("--", "-") // Clean up any double hyphens
 }
 
 #[actix_web::main]
@@ -350,6 +374,7 @@ async fn create_job(settings: RecorderSettings, shared_hashmap: SharedJobHashmap
 
     let job = Job {
         job_id: job_id,
+        job_uid: generate_uid(),
         running: true,
         process: None,
         started_at: None,
